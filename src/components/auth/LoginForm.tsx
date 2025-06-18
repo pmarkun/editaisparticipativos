@@ -30,15 +30,16 @@ export default function LoginForm() {
   });
 
   async function onSubmit(data: LoginFormData) {
-    console.log("[🧪] Auth object:", auth);
-console.log("[🧪] Auth.app.options:", auth?.app?.options);
     setIsLoading(true);
+
+    // Aguardar um pouco para garantir que o Firebase foi inicializado
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     if (!auth) {
       toast({
         title: "Erro de Configuração do Firebase",
-        description: "A autenticação não pôde ser inicializada. Verifique se as variáveis de ambiente do Firebase estão corretas no arquivo .env.local e reinicie o servidor de desenvolvimento.",
+        description: "A autenticação não pôde ser inicializada. Aguarde um momento e tente novamente.",
         variant: "destructive",
-        duration: 7000,
       });
       setIsLoading(false);
       return;

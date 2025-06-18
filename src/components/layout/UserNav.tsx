@@ -14,86 +14,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogIn, LogOut, Settings, UserPlus, UserCircle, LayoutGrid } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { onAuthStateChanged, signOut, type User as FirebaseUser } from "firebase/auth";
-import { auth, db } from "@/firebase/client";
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { doc, getDoc } from 'firebase/firestore';
-
-interface AppUser {
-  uid: string;
-  name: string | null;
-  email: string | null;
-  avatarUrl?: string | null;
-  role: 'proponent' | 'admin' | null; // Adicionando role
-}
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function UserNav() {
-  const [user, setUser] = useState<AppUser | null>(null);
-  const [mounted, setMounted] = useState(false);
+  const { user, loading, logout } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
 
-  useEffect(() => {
-    setMounted(true);
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
-      if (firebaseUser) {
-        // Usuário está logado, buscar role do Firestore
-        let userRole: AppUser['role'] = null; // Default role
-        try {
-          // Tenta buscar primeiro na coleção 'users' (cadastro geral)
-          const userDocRef = doc(db, "users", firebaseUser.uid);
-          const userDocSnap = await getDoc(userDocRef);
-
-          if (userDocSnap.exists()) {
-             // 'role' pode não existir no doc 'users', então assumimos proponente se não especificado
-            userRole = userDocSnap.data()?.role || 'proponent';
-          } else {
-            // Se não encontrar em 'users', pode ser um admin antigo ou lógica diferente
-            // Para este exemplo, se não achar em 'users' e for admin, deve ter sido setado manualmente.
-            // Aqui, podemos adicionar uma checagem na coleção 'admins' se existir
-            // ou assumir 'proponent' como fallback seguro.
-            // console.warn(`User document not found in 'users' for UID: ${firebaseUser.uid}. Defaulting role.`);
-          }
-          
-          // Se o usuário tem um displayName no Firebase Auth, use-o. Senão, tente buscar do doc 'users'.
-          // Se ainda não houver, use o email.
-          let displayName = firebaseUser.displayName;
-          if (!displayName && userDocSnap.exists()) {
-            displayName = userDocSnap.data()?.name || firebaseUser.email;
-          }
-
-
-          setUser({
-            uid: firebaseUser.uid,
-            name: displayName,
-            email: firebaseUser.email,
-            avatarUrl: firebaseUser.photoURL,
-            role: userRole,
-          });
-        } catch (error) {
-          console.error("Error fetching user role:", error);
-          // Se houver erro ao buscar a role, defina como proponente
-           setUser({
-            uid: firebaseUser.uid,
-            name: firebaseUser.displayName || firebaseUser.email,
-            email: firebaseUser.email,
-            avatarUrl: firebaseUser.photoURL,
-            role: 'proponent', // Fallback
-          });
-        }
-      } else {
-        // Usuário está deslogado
-        setUser(null);
-      }
-    });
-
-    return () => unsubscribe(); // Limpar o listener ao desmontar
-  }, []);
-
-  if (!mounted) {
-    // Skeleton loader para evitar hydration mismatch e layout shift
+  if (loading) {
     return (
       <div className="flex items-center gap-2">
         <div className="h-8 w-20 rounded-md bg-muted animate-pulse"></div>
@@ -122,7 +52,7 @@ export default function UserNav() {
   }
 
   const getInitials = (name: string | null) => {
-    if (!name) return "SN"; // Sem Nome
+    if (!name) return "SN";
     const names = name.split(' ');
     let initials = names[0].substring(0, 1).toUpperCase();
     if (names.length > 1) {
@@ -133,13 +63,12 @@ export default function UserNav() {
   
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      await logout();
       toast({
         title: "Logout realizado",
         description: "Você foi desconectado com sucesso.",
       });
-      setUser(null); // Limpa o estado do usuário localmente
-      router.push('/'); // Redireciona para a home page
+      router.push('/');
     } catch (error) {
       console.error("Erro no logout:", error);
       toast({
@@ -151,7 +80,7 @@ export default function UserNav() {
   };
 
   const dashboardPath = user.role === 'admin' ? '/admin/dashboard' : '/proponent/dashboard';
-  const profilePath = user.role === 'admin' ? '/admin/profile' : '/proponent/profile'; // Supondo que admin também tenha perfil
+  const profilePath = user.role === 'admin' ? '/admin/profile' : '/proponent/profile';
 
   return (
     <DropdownMenu>
@@ -185,7 +114,7 @@ export default function UserNav() {
               <span>Painel</span>
             </Link>
           </DropdownMenuItem>
-          {(user.role === 'proponent' || user.role === 'admin') && ( // Assumindo que admin também pode ter um perfil editável
+          {(user.role === 'proponent' || user.role === 'admin') && (
              <DropdownMenuItem asChild>
               <Link href={profilePath}>
                 <UserCircle className="mr-2 h-4 w-4" />

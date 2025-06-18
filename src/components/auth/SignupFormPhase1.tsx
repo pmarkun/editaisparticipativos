@@ -12,10 +12,10 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { auth, db } from "@/lib/firebaseConfig"; // Import auth and db
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth"; // Import Firebase Auth functions
 import { doc, setDoc, Timestamp } from "firebase/firestore"; // Import Firestore functions
 import { useRouter } from "next/navigation";
+import { auth, db } from "@/firebase/client";
 
 export default function SignupFormPhase1() {
   const [isLoading, setIsLoading] = useState(false);
@@ -35,10 +35,13 @@ export default function SignupFormPhase1() {
   async function onSubmit(data: SignupFormDataPhase1) {
     setIsLoading(true);
 
+    // Aguardar um pouco para garantir que o Firebase foi inicializado
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     if (!auth || !db) {
       toast({
         title: "Erro de Configuração",
-        description: "Firebase Auth ou Firestore não estão configurados corretamente. Verifique o console.",
+        description: "Firebase Auth ou Firestore não estão configurados corretamente. Aguarde um momento e tente novamente.",
         variant: "destructive",
       });
       setIsLoading(false);
