@@ -87,9 +87,13 @@ export default function ProponentProfileForm() {
 
     setIsLoading(true);
     try {
+      // Check if user has any entities
+      const hasEntity = data.entities && data.entities.length > 0;
+      
       // Usar o UID do usuário autenticado como ID do documento do perfil
       const profileData = {
         ...data,
+        hasEntity, // Add hasEntity flag
         userId: user.uid,
         userEmail: user.email,
         updatedAt: Timestamp.now(),

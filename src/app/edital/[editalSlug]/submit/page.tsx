@@ -7,6 +7,7 @@ import PageTitle from "@/components/shared/PageTitle";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { getEditalIdFromSlug } from "@/lib/slug-helpers";
+import ProjectSubmissionClientWrapper from "@/components/auth/ProjectSubmissionClientWrapper";
 
 interface EditalDetails {
   id: string;
@@ -54,13 +55,15 @@ export default async function ProjectSubmitPage({ params }: { params: Promise<{ 
   
   if (!editalId) {
     return (
-      <div className="text-center py-10">
-        <PageTitle className="text-2xl !text-destructive !mb-2">Edital não encontrado</PageTitle>
-        <p className="text-muted-foreground mb-4">O edital para o qual você está tentando submeter um projeto não foi encontrado, não existe ou não está mais disponível para submissões.</p>
-        <Button asChild variant="link">
-          <Link href="/editais">Voltar para Editais</Link>
-        </Button>
-      </div>
+      <ProjectSubmissionClientWrapper>
+        <div className="text-center py-10">
+          <PageTitle className="text-2xl !text-destructive !mb-2">Edital não encontrado</PageTitle>
+          <p className="text-muted-foreground mb-4">O edital para o qual você está tentando submeter um projeto não foi encontrado, não existe ou não está mais disponível para submissões.</p>
+          <Button asChild variant="link">
+            <Link href="/editais">Voltar para Editais</Link>
+          </Button>
+        </div>
+      </ProjectSubmissionClientWrapper>
     );
   }
 
@@ -68,29 +71,33 @@ export default async function ProjectSubmitPage({ params }: { params: Promise<{ 
 
   if (!editalDetails) {
     return (
-      <div className="text-center py-10">
-        <PageTitle className="text-2xl !text-destructive !mb-2">Edital não encontrado</PageTitle>
-        <p className="text-muted-foreground mb-4">O edital para o qual você está tentando submeter um projeto não foi encontrado, não existe ou não está mais disponível para submissões.</p>
-        <Button asChild variant="link">
-          <Link href="/editais">Voltar para Editais</Link>
-        </Button>
-      </div>
+      <ProjectSubmissionClientWrapper>
+        <div className="text-center py-10">
+          <PageTitle className="text-2xl !text-destructive !mb-2">Edital não encontrado</PageTitle>
+          <p className="text-muted-foreground mb-4">O edital para o qual você está tentando submeter um projeto não foi encontrado, não existe ou não está mais disponível para submissões.</p>
+          <Button asChild variant="link">
+            <Link href="/editais">Voltar para Editais</Link>
+          </Button>
+        </div>
+      </ProjectSubmissionClientWrapper>
     );
   }
 
   return (
-    <div>
-      <Card className="mb-8 bg-secondary/50 border-primary/20">
-        <CardHeader>
-          <CardTitle className="font-headline text-xl text-primary">{editalDetails.name}</CardTitle>
-          <CardDescription>{editalDetails.description}</CardDescription>
-        </CardHeader>
-      </Card>
-      <ProjectSubmitForm 
-        editalId={editalDetails.id} 
-        editalName={editalDetails.name} 
-        editalSlug={resolvedParams.editalSlug}
-      />
-    </div>
+    <ProjectSubmissionClientWrapper>
+      <div>
+        <Card className="mb-8 bg-secondary/50 border-primary/20">
+          <CardHeader>
+            <CardTitle className="font-headline text-xl text-primary">{editalDetails.name}</CardTitle>
+            <CardDescription>{editalDetails.description}</CardDescription>
+          </CardHeader>
+        </Card>
+        <ProjectSubmitForm 
+          editalId={editalDetails.id} 
+          editalName={editalDetails.name} 
+          editalSlug={resolvedParams.editalSlug}
+        />
+      </div>
+    </ProjectSubmissionClientWrapper>
   );
 }

@@ -5,20 +5,17 @@ import Link from 'next/link';
 import { Home, FileText, Settings, Users, BarChart3, Palette, PanelLeft, LogOut } from 'lucide-react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger } from '@/components/ui/sidebar';
 import AppLogo from '@/components/layout/AppLogo';
-// import AuthGuard from '@/components/shared/AuthGuard'; // Hypothetical AuthGuard
+import { AuthGuard } from '@/components/auth/AuthGuards';
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
-  // In a real app, AuthGuard would handle redirecting unauthenticated users with role 'admin'.
-  // For now, we assume the user is authenticated as admin if they reach this layout.
-  
   return (
-    // <AuthGuard role="admin"> // Wrap with AuthGuard
-    <SidebarProvider defaultOpen>
-      <div className="flex min-h-screen">
-        <Sidebar collapsible="icon" className="border-r">
-          <SidebarHeader className="p-4">
-            <AppLogo />
-          </SidebarHeader>
+    <AuthGuard role="admin">
+      <SidebarProvider defaultOpen>
+        <div className="flex min-h-screen">
+          <Sidebar collapsible="icon" className="border-r">
+            <SidebarHeader className="p-4">
+              <AppLogo />
+            </SidebarHeader>
           <SidebarContent className="p-2">
             <SidebarMenu>
               <SidebarMenuItem>
@@ -89,6 +86,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         </div>
       </div>
     </SidebarProvider>
-    // </AuthGuard>
+    </AuthGuard>
   );
 }
