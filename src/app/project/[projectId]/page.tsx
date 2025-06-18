@@ -1,9 +1,10 @@
 
 import PageTitle from "@/components/shared/PageTitle";
+import ShareButton from "@/components/shared/ShareButton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { CalendarCheck, DollarSign, Target, UserCircle, MapPin, Share2 } from "lucide-react";
+import { CalendarCheck, DollarSign, Target, UserCircle, MapPin } from "lucide-react";
 import Image from "next/image";
 import { doc, getDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/firebase/client";
@@ -178,13 +179,7 @@ export default async function ProjectDetailsPage({ params }: { params: { project
                 </Button>
               )}
               */}
-              <Button variant="outline" size="lg" className="w-full" onClick={() => {
-                if(typeof window !== "undefined") {
-                   navigator.clipboard.writeText(window.location.href).then(() => alert('Link copiado!'))
-                }
-              }}>
-                <Share2 className="mr-2 h-4 w-4" /> Compartilhar Projeto
-              </Button>
+              <ShareButton title={`Confira o projeto: ${project.name}`} />
             </div>
           </aside>
         </CardContent>
