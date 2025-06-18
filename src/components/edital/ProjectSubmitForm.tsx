@@ -38,6 +38,7 @@ export default function ProjectSubmitForm({ editalId, editalName, editalSlug }: 
   const form = useForm<ProjectSubmitFormData>({
     resolver: zodResolver(ProjectSubmitSchema),
     defaultValues: {
+      entityIndex: "",
       projectCategory: "Cultura",
       projectName: "",
       description: "",
@@ -75,7 +76,13 @@ export default function ProjectSubmitForm({ editalId, editalName, editalSlug }: 
           return;
         }
         
+        const idx =
+          userData?.entities && data.proponentEntity
+            ? userData.entities.findIndex((e) => e.cnpj === data.proponentEntity.cnpj)
+            : -1;
+
         form.reset({
+          entityIndex: idx >= 0 ? idx.toString() : "",
           projectCategory: data.projectCategory || "Cultura",
           projectName: data.projectName || "",
           description: data.description || "",
@@ -107,13 +114,17 @@ export default function ProjectSubmitForm({ editalId, editalName, editalSlug }: 
       if (isEditing && editingProjectId) {
         // Update existing project
         const projectRef = doc(db, "projects", editingProjectId);
+        const entity =
+          userData?.entities && data.entityIndex !== ""
+            ? userData.entities[parseInt(data.entityIndex, 10)]
+            : null;
+
+        const { entityIndex, ...updateValues } = data;
+
         await updateDoc(projectRef, {
-          projectCategory: data.projectCategory,
-          projectName: data.projectName,
-          description: data.description,
-          location: data.location,
-          beneficiaries: data.beneficiaries,
-          value: data.value,
+          ...updateValues,
+          entityName: entity?.name,
+          proponentEntity: entity,
           updatedAt: Timestamp.now(),
         });
 
@@ -125,9 +136,16 @@ export default function ProjectSubmitForm({ editalId, editalName, editalSlug }: 
       } else {
         // Create new project
         const slug = generateSlug(data.projectName);
-        
+
+        const entity =
+          userData?.entities && data.entityIndex !== ""
+            ? userData.entities[parseInt(data.entityIndex, 10)]
+            : null;
+
+        const { entityIndex, ...projectValues } = data;
+
         const projectData = {
-          ...data,
+          ...projectValues,
           slug: slug,
           editalId: editalId,
           editalName: editalName,
@@ -135,6 +153,8 @@ export default function ProjectSubmitForm({ editalId, editalName, editalSlug }: 
           userId: userData?.uid,
           userEmail: userData?.email,
           userName: userData?.name,
+          entityName: entity?.name,
+          proponentEntity: entity,
         };
 
         const docRef = await addDoc(collection(db, "projects"), projectData);
@@ -182,6 +202,37 @@ export default function ProjectSubmitForm({ editalId, editalName, editalSlug }: 
       )}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 p-6 bg-card shadow-xl rounded-lg">
+          {userData?.entities && userData.entities.length > 0 ? (
+            <FormField
+              control={form.control}
+              name="entityIndex"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Entidade Proponente</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a entidade proponente" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {userData?.entities?.map((entity, idx) => (
+                        <SelectItem key={idx} value={idx.toString()}>{entity.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Confirme qual entidade está vinculada a este projeto.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Nenhuma entidade cadastrada. Adicione uma em seu perfil antes de submeter projetos.
+            </p>
+          )}
           <FormField
             control={form.control}
             name="projectCategory"

@@ -23,6 +23,9 @@ export interface UserData {
     cnpj: string;
     municipalCode?: string;
     address: string;
+    responsibleName: string;
+    responsibleEmail: string;
+    responsiblePhone: string;
   }>;
 }
 

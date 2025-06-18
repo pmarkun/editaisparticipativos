@@ -21,11 +21,26 @@ export const ForgotPasswordSchema = z.object({
   email: z.string().email({ message: "Por favor, insira um email válido." }),
 });
 
+const phoneRegex = /^\(?\d{2}\)?[\s-]?\d{4,5}-?\d{4}$/;
+
 const EntitySchema = z.object({
   name: z.string().min(2, "Nome da entidade é obrigatório."),
-  cnpj: z.string().regex(/^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/, "CNPJ inválido. Use o formato XX.XXX.XXX/XXXX-XX."),
+  cnpj: z
+    .string()
+    .regex(
+      /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/,
+      "CNPJ inválido. Use o formato XX.XXX.XXX/XXXX-XX."
+    ),
   municipalCode: z.string().optional(),
   address: z.string().min(5, "Endereço da entidade é obrigatório."),
+  responsibleName: z
+    .string()
+    .min(2, "Nome do responsável é obrigatório."),
+  responsibleEmail: z.string().email("Email do responsável inválido."),
+  responsiblePhone: z
+    .string()
+    .min(10, "Telefone do responsável inválido.")
+    .regex(phoneRegex, "Formato de telefone inválido."),
 });
 
 export const ProponentProfileSchema = z.object({
@@ -61,6 +76,7 @@ export const EditalCreateSchema = z.object({
 export const ProjectCategoryEnum = z.enum(["Cultura", "Educação", "Esporte", "Meio Ambiente", "Saúde", "Tecnologia", "Outros"]);
 
 export const ProjectSubmitSchema = z.object({
+  entityIndex: z.string().min(1, "Selecione a entidade proponente."),
   projectCategory: ProjectCategoryEnum,
   projectName: z.string().min(5, "Nome do projeto é obrigatório."),
   description: z.string().min(20, "Descrição do projeto é obrigatória."),

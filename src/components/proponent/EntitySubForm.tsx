@@ -84,6 +84,45 @@ export default function EntitySubForm({ control, index, remove, field }: EntityS
             </FormItem>
           )}
         />
+        <FormField
+          control={control}
+          name={`entities.${index}.responsibleName`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Nome do Responsável</FormLabel>
+              <FormControl>
+                <Input placeholder="Nome completo do responsável" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={control}
+          name={`entities.${index}.responsibleEmail`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email do Responsável</FormLabel>
+              <FormControl>
+                <Input type="email" placeholder="email@exemplo.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={control}
+          name={`entities.${index}.responsiblePhone`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Telefone do Responsável</FormLabel>
+              <FormControl>
+                <Input placeholder="(XX) XXXXX-XXXX" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </CardContent>
     </Card>
   );
