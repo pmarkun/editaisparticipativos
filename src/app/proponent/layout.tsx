@@ -24,7 +24,7 @@ export default function ProponentLayout({ children }: { children: ReactNode }) {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Painel">
-                  <Link href="/proponent/dashboard">
+                  <Link href="/dashboard">
                     <Home />
                     <span>Painel</span>
                   </Link>
