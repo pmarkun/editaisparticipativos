@@ -31,6 +31,18 @@ export default function LoginForm() {
 
   async function onSubmit(data: LoginFormData) {
     setIsLoading(true);
+
+    if (!auth) {
+      toast({
+        title: "Erro de Configuração do Firebase",
+        description: "A autenticação não pôde ser inicializada. Verifique se as variáveis de ambiente do Firebase estão corretas no arquivo .env.local e reinicie o servidor de desenvolvimento.",
+        variant: "destructive",
+        duration: 7000,
+      });
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
       // Login bem-sucedido
@@ -54,6 +66,9 @@ export default function LoginForm() {
           case "auth/invalid-email":
             errorMessage = "O formato do email é inválido.";
             break;
+          case "auth/configuration-not-found":
+             errorMessage = "Erro de configuração do Firebase Auth. Verifique as variáveis de ambiente.";
+             break;
           default:
             errorMessage = "Ocorreu um erro desconhecido.";
         }
