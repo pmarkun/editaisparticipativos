@@ -45,7 +45,15 @@ export default function ProponentProfileForm() {
               address: userData.address || "",
               phone: userData.phone || "",
               areaOfExpertise: userData.areaOfExpertise || "",
-              entities: userData.entities || [],
+              entities: (userData.entities || []).map((e: any) => ({
+                name: e.name || "",
+                cnpj: e.cnpj || "",
+                municipalCode: e.municipalCode || "",
+                address: e.address || "",
+                responsibleName: e.responsibleName || "",
+                responsibleEmail: e.responsibleEmail || "",
+                responsiblePhone: e.responsiblePhone || "",
+              })),
             });
           }
         } catch (error) {
@@ -268,7 +276,17 @@ export default function ProponentProfileForm() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => append({ name: "", cnpj: "", municipalCode: "", address: "" })}
+                onClick={() =>
+                  append({
+                    name: "",
+                    cnpj: "",
+                    municipalCode: "",
+                    address: "",
+                    responsibleName: "",
+                    responsibleEmail: "",
+                    responsiblePhone: "",
+                  })
+                }
                 className="w-full mt-4 border-dashed border-primary text-primary hover:bg-primary/10 hover:text-primary"
               >
                 <PlusCircle className="mr-2 h-4 w-4" />
