@@ -11,13 +11,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import PageTitle from "@/components/shared/PageTitle";
 import { db } from "@/firebase/client";
 import { collection, addDoc, Timestamp } from "firebase/firestore";
 import { generateSlug } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
+import { useSearchParams } from "next/navigation";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 
 interface ProjectSubmitFormProps {
   editalId: string; // To associate the project with an edital
@@ -27,12 +29,16 @@ interface ProjectSubmitFormProps {
 
 export default function ProjectSubmitForm({ editalId, editalName, editalSlug }: ProjectSubmitFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const { toast } = useToast();
   const { userData } = useAuth();
+  const searchParams = useSearchParams();
 
   const form = useForm<ProjectSubmitFormData>({
     resolver: zodResolver(ProjectSubmitSchema),
     defaultValues: {
+      projectCategory: "Cultura",
       projectName: "",
       description: "",
       location: "",
@@ -42,47 +48,119 @@ export default function ProjectSubmitForm({ editalId, editalName, editalSlug }: 
     },
   });
 
+  // Check if we're editing an existing project
+  useEffect(() => {
+    const editProjectId = searchParams.get('edit');
+    if (editProjectId) {
+      setIsEditing(true);
+      setEditingProjectId(editProjectId);
+      loadProjectData(editProjectId);
+    }
+  }, [searchParams]);
+
+  async function loadProjectData(projectId: string) {
+    try {
+      const projectRef = doc(db, "projects", projectId);
+      const projectSnap = await getDoc(projectRef);
+      
+      if (projectSnap.exists()) {
+        const data = projectSnap.data();
+        // Verify that the project belongs to the current user
+        if (data.userId !== userData?.uid) {
+          toast({
+            title: "Acesso Negado",
+            description: "Você não tem permissão para editar este projeto.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        form.reset({
+          projectCategory: data.projectCategory || "Cultura",
+          projectName: data.projectName || "",
+          description: data.description || "",
+          location: data.location || "",
+          beneficiaries: data.beneficiaries || "",
+          value: data.value || 0,
+          agreedToTerms: true, // Already agreed when first submitted
+        });
+      } else {
+        toast({
+          title: "Projeto não encontrado",
+          description: "O projeto que você está tentando editar não foi encontrado.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao carregar projeto:", error);
+      toast({
+        title: "Erro ao carregar projeto",
+        description: "Não foi possível carregar os dados do projeto.",
+        variant: "destructive",
+      });
+    }
+  }
+
   async function onSubmit(data: ProjectSubmitFormData) {
     setIsLoading(true);
     try {
-      // Gerar slug a partir do nome do projeto
-      const slug = generateSlug(data.projectName);
-      
-      const projectData = {
-        ...data,
-        slug: slug,
-        editalId: editalId,
-        editalName: editalName, // Storing for easier display later if needed
-        submittedAt: Timestamp.now(),
-        // Associate project with the logged-in user
-        userId: userData?.uid,
-        userEmail: userData?.email,
-        userName: userData?.name,
-      };
+      if (isEditing && editingProjectId) {
+        // Update existing project
+        const projectRef = doc(db, "projects", editingProjectId);
+        await updateDoc(projectRef, {
+          projectCategory: data.projectCategory,
+          projectName: data.projectName,
+          description: data.description,
+          location: data.location,
+          beneficiaries: data.beneficiaries,
+          value: data.value,
+          updatedAt: Timestamp.now(),
+        });
 
-      const docRef = await addDoc(collection(db, "projects"), projectData);
-      
-      // Gerar URL usando a nova estrutura de slugs
-      const projectUrl = editalSlug 
-        ? `/edital/${editalSlug}/${slug}` 
-        : `/edital/${editalId}/${slug}`; // Fallback para ID se não tiver slug
+        toast({
+          title: "Projeto Atualizado!",
+          description: `Seu projeto "${data.projectName}" foi atualizado com sucesso.`,
+          duration: 5000,
+        });
+      } else {
+        // Create new project
+        const slug = generateSlug(data.projectName);
+        
+        const projectData = {
+          ...data,
+          slug: slug,
+          editalId: editalId,
+          editalName: editalName,
+          submittedAt: Timestamp.now(),
+          userId: userData?.uid,
+          userEmail: userData?.email,
+          userName: userData?.name,
+        };
 
-      toast({
-        title: "Projeto Submetido!",
-        description: (
-          <div>
-            <p>Seu projeto "{data.projectName}" foi submetido com sucesso para o edital "{editalName}".</p>
-            <p className="mt-2">Slug: {slug}</p>
-            <p className="mt-1">URL do Projeto (exemplo): <a href={projectUrl} target="_blank" rel="noopener noreferrer" className="underline">{projectUrl}</a></p>
-          </div>
-        ),
-        duration: 7000,
-      });
+        const docRef = await addDoc(collection(db, "projects"), projectData);
+        
+        const projectUrl = editalSlug 
+          ? `/edital/${editalSlug}/${slug}` 
+          : `/edital/${editalId}/${slug}`;
+
+        toast({
+          title: "Projeto Submetido!",
+          description: (
+            <div>
+              <p>Seu projeto "{data.projectName}" foi submetido com sucesso para o edital "{editalName}".</p>
+              <p className="mt-2">Slug: {slug}</p>
+              <p className="mt-1">URL do Projeto (exemplo): <a href={projectUrl} target="_blank" rel="noopener noreferrer" className="underline">{projectUrl}</a></p>
+            </div>
+          ),
+          duration: 7000,
+        });
+      }
+      
       form.reset();
     } catch (error) {
-      console.error("Erro ao submeter projeto:", error);
+      console.error("Erro ao salvar projeto:", error);
       toast({
-        title: "Erro ao Submeter Projeto",
+        title: isEditing ? "Erro ao Atualizar Projeto" : "Erro ao Submeter Projeto",
         description: "Ocorreu um erro ao tentar salvar o projeto. Tente novamente.",
         variant: "destructive",
       });
@@ -93,7 +171,15 @@ export default function ProjectSubmitForm({ editalId, editalName, editalSlug }: 
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      <PageTitle>Submeter Projeto para: <span className="text-accent">{editalName}</span></PageTitle>
+      <PageTitle>
+        {isEditing ? "Editar Projeto" : `Submeter Projeto para: `}
+        {!isEditing && <span className="text-accent">{editalName}</span>}
+      </PageTitle>
+      {isEditing && (
+        <p className="text-center text-muted-foreground mb-6">
+          Edite as informações do seu projeto abaixo.
+        </p>
+      )}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 p-6 bg-card shadow-xl rounded-lg">
           <FormField
@@ -211,7 +297,7 @@ export default function ProjectSubmitForm({ editalId, editalName, editalSlug }: 
           <div className="flex justify-end pt-4">
             <Button type="submit" size="lg" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Submeter Projeto
+              {isEditing ? "Atualizar Projeto" : "Submeter Projeto"}
             </Button>
           </div>
         </form>
