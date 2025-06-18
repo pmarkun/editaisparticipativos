@@ -25,6 +25,7 @@ interface Project {
   editalName?: string;
   editalSlug?: string;
   submissionDate: Date;
+  slug: string;
 }
 
 interface ProjectsListProps {
@@ -108,6 +109,7 @@ export default function ProjectsList({ editalId, editalSlug }: ProjectsListProps
           editalName: data.editalName || "",
           editalSlug: data.editalSlug || "",
           submissionDate: data.submittedAt?.toDate() || new Date(),
+          slug: data.slug,
         });
       });
 
@@ -284,7 +286,7 @@ export default function ProjectsList({ editalId, editalSlug }: ProjectsListProps
                   </div>
                   <div className="mt-4">
                     <Button asChild className="w-full" size="sm">
-                      <Link href={`/edital/${editalSlug || editalId}/${project.id}`}>
+                      <Link href={`/edital/${editalSlug || editalId}/${project.slug}`}>
                         Ver Detalhes
                       </Link>
                     </Button>
