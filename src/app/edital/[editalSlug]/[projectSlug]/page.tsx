@@ -8,7 +8,7 @@ import { CalendarCheck, DollarSign, Target, UserCircle, MapPin } from "lucide-re
 import Image from "next/image";
 import { doc, getDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/firebase/client";
-import { getEditalSlugFromId } from "@/lib/slug-helpers";
+import { getProjectIdFromSlug, getEditalSlugFromId } from "@/lib/slug-helpers";
 
 interface ProjectDetailsData {
   id: string;
@@ -75,8 +75,23 @@ function formatDate(date: Date): string {
   });
 }
 
-export default async function ProjectDetailsPage({ params }: { params: { projectId: string } }) {
-  const project = await getProjectDetails(params.projectId);
+export default async function ProjectDetailsPage({ params }: { params: { editalSlug: string, projectSlug: string } }) {
+  // Primeiro, encontrar o ID do projeto a partir dos slugs
+  const projectId = await getProjectIdFromSlug(params.editalSlug, params.projectSlug);
+  
+  if (!projectId) {
+    return (
+      <div className="text-center py-10">
+        <PageTitle className="text-2xl !text-destructive !mb-2">Projeto não encontrado</PageTitle>
+        <p className="text-muted-foreground mb-4">O projeto que você está tentando acessar não existe ou não foi encontrado neste edital.</p>
+         <Button asChild variant="link">
+          <Link href={`/edital/${params.editalSlug}`}>Voltar para o Edital</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  const project = await getProjectDetails(projectId);
 
   if (!project) {
     return (
@@ -84,7 +99,7 @@ export default async function ProjectDetailsPage({ params }: { params: { project
         <PageTitle className="text-2xl !text-destructive !mb-2">Projeto não encontrado</PageTitle>
         <p className="text-muted-foreground mb-4">O projeto que você está tentando acessar não existe.</p>
          <Button asChild variant="link">
-          <Link href="/editais">Voltar para Editais</Link>
+          <Link href={`/edital/${params.editalSlug}`}>Voltar para o Edital</Link>
         </Button>
       </div>
     );
@@ -179,7 +194,7 @@ export default async function ProjectDetailsPage({ params }: { params: { project
               {/* Voting button might not be relevant here or needs complex logic to determine if active
               {isVotingActive && (
                 <Button size="lg" className="w-full" asChild>
-                  <Link href={`/edital/${project.editalSlug}/project/${project.id}/vote`}>
+                  <Link href={`/edital/${project.editalSlug}/${project.slug || project.id}/vote`}>
                     Votar neste Projeto
                   </Link>
                 </Button>

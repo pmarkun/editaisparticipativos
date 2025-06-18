@@ -83,11 +83,7 @@ export default async function ProjectSubmitPage({ params }: { params: { editalSl
           <CardDescription>{editalDetails.description}</CardDescription>
         </CardHeader>
       </Card>
-      <ProjectSubmitForm 
-        editalId={editalDetails.id} 
-        editalName={editalDetails.name} 
-        editalSlug={params.editalSlug}
-      />
+      <ProjectSubmitForm editalId={editalDetails.id} editalName={editalDetails.name} />
     </div>
   );
 }

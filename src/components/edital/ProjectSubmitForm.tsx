@@ -21,9 +21,10 @@ import { generateSlug } from "@/lib/utils";
 interface ProjectSubmitFormProps {
   editalId: string; // To associate the project with an edital
   editalName: string; // To display on the form
+  editalSlug?: string; // Para gerar a URL correta do projeto
 }
 
-export default function ProjectSubmitForm({ editalId, editalName }: ProjectSubmitFormProps) {
+export default function ProjectSubmitForm({ editalId, editalName, editalSlug }: ProjectSubmitFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -56,7 +57,10 @@ export default function ProjectSubmitForm({ editalId, editalName }: ProjectSubmi
 
       const docRef = await addDoc(collection(db, "projects"), projectData);
       
-      const projectUrl = `/project/${docRef.id}`; // Use Firestore ID for a stable URL
+      // Gerar URL usando a nova estrutura de slugs
+      const projectUrl = editalSlug 
+        ? `/edital/${editalSlug}/${slug}` 
+        : `/edital/${editalId}/${slug}`; // Fallback para ID se não tiver slug
 
       toast({
         title: "Projeto Submetido!",

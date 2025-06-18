@@ -57,3 +57,56 @@ export async function getEditalSlugFromId(editalId: string): Promise<string | nu
     return null;
   }
 }
+
+/**
+ * Encontra o ID do projeto a partir do slug e editalSlug
+ */
+export async function getProjectIdFromSlug(editalSlug: string, projectSlug: string): Promise<string | null> {
+  try {
+    // Primeiro, encontrar o ID do edital
+    const editalId = await getEditalIdFromSlug(editalSlug);
+    if (!editalId) {
+      return null;
+    }
+
+    const projectsCollection = collection(db, "projects");
+    const q = query(
+      projectsCollection, 
+      where("editalId", "==", editalId),
+      where("slug", "==", projectSlug),
+      limit(1)
+    );
+    const querySnapshot = await getDocs(q);
+    
+    if (!querySnapshot.empty) {
+      const doc = querySnapshot.docs[0];
+      return doc.id;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("Error finding project by slug:", error);
+    return null;
+  }
+}
+
+/**
+ * Encontra o slug do projeto a partir do ID
+ */
+export async function getProjectSlugFromId(projectId: string): Promise<string | null> {
+  try {
+    const { doc, getDoc } = await import("firebase/firestore");
+    const projectRef = doc(db, "projects", projectId);
+    const projectSnap = await getDoc(projectRef);
+    
+    if (projectSnap.exists()) {
+      const data = projectSnap.data();
+      return data.slug || null;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("Error finding project slug by ID:", error);
+    return null;
+  }
+}

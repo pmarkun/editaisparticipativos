@@ -188,13 +188,13 @@ export default async function EditalDetailPage({ params }: { params: { editalSlu
                   <CardFooter>
                     {votingActive ? (
                       <Button asChild className="w-full" variant="default">
-                        <Link href={`/edital/${params.editalSlug}/project/${project.id}/vote`}>
+                        <Link href={`/edital/${params.editalSlug}/${project.slug || project.id}/vote`}>
                           <VoteIcon className="mr-2 h-4 w-4" /> Votar Neste Projeto
                         </Link>
                       </Button>
                     ) : (
                        <Button asChild className="w-full" variant="outline">
-                        <Link href={`/project/${project.id}`}> 
+                        <Link href={`/edital/${params.editalSlug}/${project.slug || project.id}`}> 
                            Ver Detalhes <ArrowRight className="ml-2 h-4 w-4" />
                         </Link>
                       </Button>
