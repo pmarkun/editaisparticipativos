@@ -12,8 +12,10 @@ interface Edital {
   id: string;
   name: string;
   description: string;
-  subscriptionDeadline: Date;
-  votingDeadline: Date;
+  subscriptionStartDate: Date;
+  subscriptionEndDate: Date;
+  votingStartDate: Date;
+  votingEndDate: Date;
   imageUrl: string; // For placeholder
   aiHint: string;   // For placeholder
   slug?: string;    // Slug gerado a partir do nome
@@ -32,8 +34,10 @@ async function fetchEditais(): Promise<Edital[]> {
         name: data.name || "Edital sem nome",
         description: data.description || "Sem descrição.",
         // Firestore Timestamps to JS Date
-        subscriptionDeadline: data.subscriptionDeadline instanceof Timestamp ? data.subscriptionDeadline.toDate() : new Date(),
-        votingDeadline: data.votingDeadline instanceof Timestamp ? data.votingDeadline.toDate() : new Date(),
+        subscriptionStartDate: data.subscriptionStartDate instanceof Timestamp ? data.subscriptionStartDate.toDate() : new Date(),
+        subscriptionEndDate: data.subscriptionEndDate instanceof Timestamp ? data.subscriptionEndDate.toDate() : new Date(),
+        votingStartDate: data.votingStartDate instanceof Timestamp ? data.votingStartDate.toDate() : new Date(),
+        votingEndDate: data.votingEndDate instanceof Timestamp ? data.votingEndDate.toDate() : new Date(),
         imageUrl: "https://placehold.co/400x250.png", // Placeholder
         aiHint: data.name ? data.name.toLowerCase().split(" ").slice(0,2).join(" ") : "culture community", // Basic AI hint from name
         slug: data.slug || "", // Incluir slug se existir
@@ -73,14 +77,14 @@ export default async function EditaisPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {openEditais.map((edital) => {
-            const subscriptionDeadlineDate = new Date(edital.subscriptionDeadline);
-            subscriptionDeadlineDate.setHours(23, 59, 59, 999); // End of day
-            const votingDeadlineDate = new Date(edital.votingDeadline);
-            votingDeadlineDate.setHours(23, 59, 59, 999); // End of day
+            const subscriptionEndDate = new Date(edital.subscriptionEndDate);
+            subscriptionEndDate.setHours(23, 59, 59, 999); // End of day
+            const votingEndDate = new Date(edital.votingEndDate);
+            votingEndDate.setHours(23, 59, 59, 999); // End of day
             
-            const subscriptionActive = subscriptionDeadlineDate >= today;
-            const votingActive = votingDeadlineDate >= today && !subscriptionActive;
-            const isClosed = votingDeadlineDate < today;
+            const subscriptionActive = subscriptionEndDate >= today;
+            const votingActive = votingEndDate >= today && !subscriptionActive;
+            const isClosed = votingEndDate < today;
             
             let statusText = "Ver Detalhes";
             let statusColor = "bg-primary/10 text-primary";
@@ -124,8 +128,8 @@ export default async function EditaisPage() {
                 <CardContent className="flex-grow">
                   <CardDescription className="line-clamp-3 mb-3">{edital.description}</CardDescription>
                   <div className="text-xs text-muted-foreground space-y-1">
-                    <p className="flex items-center"><CalendarDays className="h-3.5 w-3.5 mr-1.5 opacity-80" /> Inscrições até: {formatDate(edital.subscriptionDeadline)}</p>
-                    <p className="flex items-center"><CalendarDays className="h-3.5 w-3.5 mr-1.5 opacity-80" /> Votação até: {formatDate(edital.votingDeadline)}</p>
+                    <p className="flex items-center"><CalendarDays className="h-3.5 w-3.5 mr-1.5 opacity-80" /> Inscrições até: {formatDate(edital.subscriptionEndDate)}</p>
+                    <p className="flex items-center"><CalendarDays className="h-3.5 w-3.5 mr-1.5 opacity-80" /> Votação até: {formatDate(edital.votingEndDate)}</p>
                   </div>
                 </CardContent>
                 <CardFooter>

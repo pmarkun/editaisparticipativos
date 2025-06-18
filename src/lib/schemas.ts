@@ -40,11 +40,21 @@ export const ProponentProfileSchema = z.object({
 export const EditalCreateSchema = z.object({
   name: z.string().min(5, "Nome do edital é obrigatório (mínimo 5 caracteres)."),
   description: z.string().min(20, "Descrição é obrigatória (mínimo 20 caracteres)."),
-  subscriptionDeadline: z.date({ required_error: "Data limite para inscrição é obrigatória." }),
-  votingDeadline: z.date({ required_error: "Data limite para votação é obrigatória." }),
-}).refine(data => data.votingDeadline > data.subscriptionDeadline, {
-  message: "Data limite de votação deve ser posterior à data limite de inscrição.",
-  path: ["votingDeadline"],
+  detailedDescription: z.string().min(50, "Descrição detalhada é obrigatória (mínimo 50 caracteres)."),
+  imageUrl: z.string().url("URL da imagem inválida").optional().or(z.literal("")),
+  subscriptionStartDate: z.date({ required_error: "Data de início das inscrições é obrigatória." }),
+  subscriptionEndDate: z.date({ required_error: "Data de fim das inscrições é obrigatória." }),
+  votingStartDate: z.date({ required_error: "Data de início da votação é obrigatória." }),
+  votingEndDate: z.date({ required_error: "Data de fim da votação é obrigatória." }),
+}).refine(data => data.subscriptionEndDate > data.subscriptionStartDate, {
+  message: "Data de fim das inscrições deve ser posterior à data de início.",
+  path: ["subscriptionEndDate"],
+}).refine(data => data.votingStartDate >= data.subscriptionEndDate, {
+  message: "Data de início da votação deve ser posterior ou igual ao fim das inscrições.",
+  path: ["votingStartDate"],
+}).refine(data => data.votingEndDate > data.votingStartDate, {
+  message: "Data de fim da votação deve ser posterior à data de início da votação.",
+  path: ["votingEndDate"],
 });
 
 export const ProjectCategoryEnum = z.enum(["Cultura", "Educação", "Esporte", "Meio Ambiente", "Saúde", "Tecnologia", "Outros"]);
