@@ -44,6 +44,7 @@ export default function LoginForm() {
     }
 
     try {
+      console.log(auth);
       const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
       // Login bem-sucedido
       toast({

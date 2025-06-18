@@ -12,14 +12,15 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { db } from "@/lib/firebaseConfig";
-import { collection, addDoc, Timestamp } from "firebase/firestore";
-// import { useRouter } from "next/navigation"; // Uncomment if using App Router navigation
+import { auth, db } from "@/lib/firebaseConfig"; // Import auth and db
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth"; // Import Firebase Auth functions
+import { doc, setDoc, Timestamp } from "firebase/firestore"; // Import Firestore functions
+import { useRouter } from "next/navigation";
 
 export default function SignupFormPhase1() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  // const router = useRouter(); // Uncomment if using App Router navigation
+  const router = useRouter();
 
   const form = useForm<SignupFormDataPhase1>({
     resolver: zodResolver(SignupSchemaPhase1),
@@ -33,31 +34,65 @@ export default function SignupFormPhase1() {
 
   async function onSubmit(data: SignupFormDataPhase1) {
     setIsLoading(true);
+
+    if (!auth || !db) {
+      toast({
+        title: "Erro de Configuração",
+        description: "Firebase Auth ou Firestore não estão configurados corretamente. Verifique o console.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      // **IMPORTANTE**: Em uma aplicação real, você usaria o Firebase Authentication para criar usuários.
-      // NUNCA armazene senhas diretamente no Firestore.
-      // Aqui, estamos apenas simulando o armazenamento de nome e email.
-      const userToSave = {
+      // Criar usuário no Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+      const user = userCredential.user;
+
+      // Atualizar o perfil do usuário no Firebase Auth (adicionar nome)
+      await updateProfile(user, {
+        displayName: data.name,
+      });
+
+      // Salvar informações adicionais do usuário no Firestore
+      // Usar o UID do Firebase Auth como ID do documento na coleção 'users'
+      await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
         name: data.name,
         email: data.email,
+        role: "proponent", // Definir role padrão como proponente
         createdAt: Timestamp.now(),
-        // Não salve data.password!
-      };
-
-      const docRef = await addDoc(collection(db, "users"), userToSave);
+      });
       
       toast({
-        title: "Cadastro realizado!",
-        description: `Usuário ${data.name} registrado (ID: ${docRef.id}). Você será redirecionado para completar seu perfil.`,
+        title: "Conta Criada com Sucesso!",
+        description: `Bem-vindo, ${data.name}! Sua conta foi criada. Você será redirecionado para o login.`,
       });
       form.reset();
-      // On success: redirect to proponent profile page for phase 2
-      // router.push('/proponent/profile'); 
-    } catch (error) {
+      // Redirecionar para a página de login após o cadastro bem-sucedido
+      router.push('/login'); 
+    } catch (error: any) {
       console.error("Erro ao cadastrar usuário:", error);
+      let errorMessage = "Ocorreu um erro ao tentar criar sua conta. Tente novamente.";
+      if (error.code) {
+        switch (error.code) {
+          case "auth/email-already-in-use":
+            errorMessage = "Este email já está sendo utilizado por outra conta.";
+            break;
+          case "auth/invalid-email":
+            errorMessage = "O formato do email é inválido.";
+            break;
+          case "auth/weak-password":
+            errorMessage = "A senha é muito fraca. Tente uma senha mais forte.";
+            break;
+          default:
+            errorMessage = `Erro: ${error.message}`;
+        }
+      }
       toast({
         title: "Erro no Cadastro",
-        description: "Ocorreu um erro ao tentar criar sua conta. Tente novamente.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -68,8 +103,8 @@ export default function SignupFormPhase1() {
   return (
     <Card className="w-full max-w-md shadow-xl">
       <CardHeader>
-        <CardTitle className="font-headline text-2xl">Criar Conta de Proponente</CardTitle>
-        <CardDescription>Primeiro passo para submeter seus projetos.</CardDescription>
+        <CardTitle className="font-headline text-2xl">Criar Conta</CardTitle>
+        <CardDescription>Preencha os campos abaixo para se registrar.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -107,7 +142,7 @@ export default function SignupFormPhase1() {
                 <FormItem>
                   <FormLabel>Senha</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="********" {...field} />
+                    <Input type="password" placeholder="Mínimo 8 caracteres" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -120,7 +155,7 @@ export default function SignupFormPhase1() {
                 <FormItem>
                   <FormLabel>Confirmar Senha</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="********" {...field} />
+                    <Input type="password" placeholder="Repita sua senha" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
