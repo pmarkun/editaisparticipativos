@@ -1,18 +1,20 @@
 
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ProjectVoteSchema, type ProjectVoteFormData } from "@/lib/schemas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import PageTitle from "@/components/shared/PageTitle";
 import { db } from "@/firebase/client";
-import { collection, addDoc, Timestamp, query, where, getDocs } from "firebase/firestore";
+import { collection, addDoc, Timestamp } from "firebase/firestore";
+
+type VoteFormData = ProjectVoteFormData & { captcha: string };
 
 interface ProjectVoteFormProps {
   editalId: string;
@@ -24,18 +26,30 @@ export default function ProjectVoteForm({ editalId, projectId, projectName }: Pr
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const form = useForm<ProjectVoteFormData>({
-    resolver: zodResolver(ProjectVoteSchema),
+  const form = useForm<VoteFormData>({
+    resolver: zodResolver(ProjectVoteSchema) as unknown as Resolver<VoteFormData>,
     defaultValues: {
       fullName: "",
       cpf: "",
       email: "",
       phone: "",
+      captcha: "",
     },
   });
 
-  async function onSubmit(data: ProjectVoteFormData) {
+  const [captcha, setCaptcha] = useState<[number, number]>([0, 0]);
+
+  useEffect(() => {
+    setCaptcha([Math.floor(Math.random() * 9) + 1, Math.floor(Math.random() * 9) + 1]);
+  }, []);
+
+  async function onSubmit(data: VoteFormData) {
     setIsLoading(true);
+    if (parseInt(data.captcha) !== captcha[0] + captcha[1]) {
+      toast({ title: "Captcha incorreto", variant: "destructive" });
+      setIsLoading(false);
+      return;
+    }
     try {
       // Opcional: Verificar se o CPF já votou neste projeto
       // const votesQuery = query(
@@ -54,22 +68,42 @@ export default function ProjectVoteForm({ editalId, projectId, projectName }: Pr
       //   return;
       // }
 
+      const token = crypto.randomUUID();
       const voteData = {
-        ...data,
+        fullName: data.fullName,
+        cpf: data.cpf,
+        email: data.email,
+        phone: data.phone,
         editalId: editalId,
         projectId: projectId,
-        projectName: projectName, // Storing for easier reference
-        votedAt: Timestamp.now(),
+        projectName: projectName,
+        status: "Pendente" as const,
+        token,
+        createdAt: Timestamp.now(),
       };
 
-      const docRef = await addDoc(collection(db, "votes"), voteData);
-      
+      await addDoc(collection(db, "pendingVotes"), voteData);
+
+      try {
+        await fetch("/api/send-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            emails: [data.email],
+            title: "Confirme seu voto",
+            text: `Clique no link para confirmar seu voto: ${window.location.origin}/api/confirm-vote?token=${token}`,
+          }),
+        });
+      } catch (e) {
+        console.error("Erro ao disparar email", e);
+      }
+
       toast({
-        title: "Voto Registrado!",
-        description: `Seu voto para o projeto "${projectName}" (ID: ${docRef.id}) foi computado com sucesso. Obrigado por participar!`,
-        duration: 7000,
+        title: "Confirmação enviada",
+        description: "Enviamos um email com o link para confirmar seu voto.",
       });
       form.reset();
+      setCaptcha([Math.floor(Math.random() * 9) + 1, Math.floor(Math.random() * 9) + 1]);
     } catch (error) {
       console.error("Erro ao registrar voto:", error);
       toast({
@@ -138,6 +172,19 @@ export default function ProjectVoteForm({ editalId, projectId, projectName }: Pr
                 <FormLabel>Telefone (com DDD)</FormLabel>
                 <FormControl>
                   <Input placeholder="(XX) XXXXX-XXXX" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="captcha"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Quanto é {captcha[0]} + {captcha[1]}?</FormLabel>
+                <FormControl>
+                  <Input placeholder="Resultado" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

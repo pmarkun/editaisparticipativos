@@ -1,5 +1,6 @@
 
 import { z } from 'zod';
+import { validateCPF } from './utils';
 
 export const LoginSchema = z.object({
   email: z.string().email({ message: "Por favor, insira um email válido." }),
@@ -81,7 +82,10 @@ export const ProjectSubmitSchema = z.object({
 
 export const ProjectVoteSchema = z.object({
   fullName: z.string().min(3, "Nome completo é obrigatório."),
-  cpf: z.string().regex(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/, "CPF inválido. Use o formato XXX.XXX.XXX-XX."),
+  cpf: z
+    .string()
+    .regex(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/, "CPF inválido. Use o formato XXX.XXX.XXX-XX.")
+    .refine((val) => validateCPF(val), { message: "CPF inválido." }),
   email: z.string().email("Email inválido."),
   phone: z.string().min(10, "Telefone inválido.").regex(/^\(?\d{2}\)?[\s-]?\d{4,5}-?\d{4}$/, "Formato de telefone inválido."),
 });
