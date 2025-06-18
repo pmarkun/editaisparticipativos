@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ArrowRight, CalendarDays, Users, Vote as VoteIcon } from "lucide-react";
 import Image from "next/image";
 import { doc, getDoc, collection, query, where, getDocs, orderBy, Timestamp } from "firebase/firestore";
-import { db } from "@/lib/firebaseConfig";
+import { db } from "@/firebase/client";
 
 interface EditalData {
   id: string;

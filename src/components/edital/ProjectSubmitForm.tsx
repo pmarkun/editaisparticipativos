@@ -14,7 +14,7 @@ import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import PageTitle from "@/components/shared/PageTitle";
-import { db } from "@/lib/firebaseConfig";
+import { db } from "@/firebase/client";
 import { collection, addDoc, Timestamp } from "firebase/firestore";
 
 interface ProjectSubmitFormProps {

@@ -2,7 +2,7 @@
 import ProjectSubmitForm from "@/components/edital/ProjectSubmitForm";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { doc, getDoc, Timestamp } from "firebase/firestore";
-import { db } from "@/lib/firebaseConfig";
+import { db } from "@/firebase/client";
 import PageTitle from "@/components/shared/PageTitle";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";

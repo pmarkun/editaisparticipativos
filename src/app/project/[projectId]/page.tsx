@@ -6,7 +6,7 @@ import Link from "next/link";
 import { CalendarCheck, DollarSign, Target, UserCircle, MapPin, Share2 } from "lucide-react";
 import Image from "next/image";
 import { doc, getDoc, Timestamp } from "firebase/firestore";
-import { db } from "@/lib/firebaseConfig";
+import { db } from "@/firebase/client";
 
 interface ProjectDetailsData {
   id: string;

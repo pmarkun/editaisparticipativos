@@ -3,7 +3,6 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import ClientAuthProvider from '@/components/providers/ClientAuthProvider';
 
 export const metadata: Metadata = {
   title: 'Edital Participativo',
@@ -26,14 +25,12 @@ export default function RootLayout({
         className="font-body antialiased min-h-screen flex flex-col"
         style={{ '--font-body': "'PT Sans', sans-serif" } as React.CSSProperties}
       >
-        <ClientAuthProvider>
-          <Header />
-          <main className="flex-grow container mx-auto px-4 py-8">
-            {children}
-          </main>
-          <Footer />
-          <Toaster />
-        </ClientAuthProvider>
+        <Header />
+        <main className="flex-grow container mx-auto px-4 py-8">
+          {children}
+        </main>
+        <Footer />
+        <Toaster />
       </body>
     </html>
   );

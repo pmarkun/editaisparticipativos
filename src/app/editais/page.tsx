@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ArrowRight, CalendarDays, FileText } from "lucide-react";
 import Image from "next/image";
 import { collection, getDocs, orderBy, query, Timestamp } from "firebase/firestore";
-import { db } from "@/lib/firebaseConfig";
+import { db } from "@/firebase/client";
 
 interface Edital {
   id: string;

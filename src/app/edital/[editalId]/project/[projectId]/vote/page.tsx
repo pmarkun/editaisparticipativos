@@ -3,7 +3,7 @@ import ProjectVoteForm from "@/components/edital/ProjectVoteForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
 import { doc, getDoc, Timestamp } from "firebase/firestore";
-import { db } from "@/lib/firebaseConfig";
+import { db } from "@/firebase/client";
 import PageTitle from "@/components/shared/PageTitle";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";

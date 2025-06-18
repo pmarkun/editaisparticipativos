@@ -18,7 +18,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import PageTitle from "@/components/shared/PageTitle";
 import { collection, addDoc } from "firebase/firestore";
-import { db } from "@/lib/firebaseConfig"; // Importar configuração do Firebase
+import { db } from "@/firebase/client"; // Importar configuração do Firebase
 
 export default function EditalCreateForm() {
   const [isLoading, setIsLoading] = useState(false);
