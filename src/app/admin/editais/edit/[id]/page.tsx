@@ -58,10 +58,6 @@ export default async function EditalEditPage({ params }: EditalEditPageProps) {
       <EditalCreateForm
         editalId={editalId}
         initialData={editalData}
-        onSuccess={() => {
-          // This will be handled on the client side
-          // The form component will redirect after successful update
-        }}
       />
     </div>
   );
