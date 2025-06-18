@@ -22,25 +22,17 @@ import { generateSlug } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import dynamic from "next/dynamic";
 
-// Import ReactQuill dynamically to avoid SSR issues
-const ReactQuill = dynamic(() => import('react-quill'), { 
-  ssr: false,
-  loading: () => <div className="h-32 border rounded-md bg-muted animate-pulse" />
-});
-
-// Import Quill styles
-import 'react-quill/dist/quill.snow.css';
+// Import MDEditor dynamically to avoid SSR issues
+const MDEditor = dynamic(
+  () => import('@uiw/react-md-editor').then((mod) => mod.default),
+  { ssr: false }
+);
 
 export default function EditalCreateForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string>("");
-  const [isQuillLoaded, setIsQuillLoaded] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-
-  useEffect(() => {
-    setIsQuillLoaded(true);
-  }, []);
 
   const form = useForm<EditalCreateFormData>({
     resolver: zodResolver(EditalCreateSchema),
@@ -128,22 +120,6 @@ export default function EditalCreateForm() {
       setIsLoading(false);
     }
   }
-
-  const quillModules = {
-    toolbar: [
-      [{ 'header': [1, 2, 3, false] }],
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-      [{ 'color': [] }, { 'background': [] }],
-      ['link'],
-      ['clean']
-    ],
-  };
-
-  const quillFormats = [
-    'header', 'bold', 'italic', 'underline', 'strike',
-    'list', 'bullet', 'color', 'background', 'link'
-  ];
 
   return (
     <div className="w-full max-w-4xl mx-auto">
@@ -261,17 +237,13 @@ export default function EditalCreateForm() {
                     <FormLabel>Conteúdo Detalhado do Edital</FormLabel>
                     <FormControl>
                       <div className="min-h-[300px]">
-                        {isQuillLoaded && (
-                          <ReactQuill
-                            theme="snow"
-                            value={field.value}
-                            onChange={field.onChange}
-                            modules={quillModules}
-                            formats={quillFormats}
-                            placeholder="Descreva detalhadamente o edital, incluindo objetivos, critérios, regras, público-alvo, etc..."
-                            style={{ height: '250px' }}
-                          />
-                        )}
+                        <MDEditor
+                          value={field.value}
+                          onChange={(value) => field.onChange(value || "")}
+                          preview="edit"
+                          height={300}
+                          data-color-mode="light"
+                        />
                       </div>
                     </FormControl>
                     <FormMessage />

@@ -65,7 +65,7 @@ export default function ProjectsList({ editalId, editalSlug }: ProjectsListProps
       // Build query constraints
       const constraints = [
         where("editalId", "==", editalId),
-        orderBy("submissionDate", "desc")
+        orderBy("submittedAt", "desc")
       ];
 
       // Add category filter if specified
@@ -107,7 +107,7 @@ export default function ProjectsList({ editalId, editalSlug }: ProjectsListProps
           editalId: data.editalId || "",
           editalName: data.editalName || "",
           editalSlug: data.editalSlug || "",
-          submissionDate: data.submissionDate?.toDate() || new Date(),
+          submissionDate: data.submittedAt?.toDate() || new Date(),
         });
       });
 
