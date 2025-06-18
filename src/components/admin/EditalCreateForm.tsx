@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -16,6 +17,8 @@ import { ptBR } from "date-fns/locale";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import PageTitle from "@/components/shared/PageTitle";
+import { collection, addDoc } from "firebase/firestore";
+import { db } from "@/lib/firebaseConfig"; // Importar configuração do Firebase
 
 export default function EditalCreateForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -32,23 +35,28 @@ export default function EditalCreateForm() {
 
   async function onSubmit(data: EditalCreateFormData) {
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    console.log(data);
-    // Generate unique URL (slugify name + timestamp/random string)
-    const uniqueUrl = `/edital/${data.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
-    console.log("Generated Edital URL:", uniqueUrl);
-    setIsLoading(false);
-    toast({
-      title: "Edital Criado!",
-      description: (
-        <div>
-          <p>O edital "{data.name}" foi criado com sucesso.</p>
-          <p className="mt-2">URL pública: <a href={uniqueUrl} target="_blank" rel="noopener noreferrer" className="underline">{uniqueUrl}</a></p>
-        </div>
-      ),
-    });
-    form.reset(); 
+    try {
+      // Salvar dados no Firestore
+      const docRef = await addDoc(collection(db, "editais"), {
+        ...data,
+        createdAt: new Date(), // Adicionar timestamp de criação
+      });
+      
+      toast({
+        title: "Edital Criado!",
+        description: `O edital "${data.name}" foi criado com sucesso. ID: ${docRef.id}`,
+      });
+      form.reset();
+    } catch (error) {
+      console.error("Erro ao criar edital:", error);
+      toast({
+        title: "Erro ao Criar Edital",
+        description: "Ocorreu um erro ao tentar salvar o edital. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -155,7 +163,9 @@ export default function EditalCreateForm() {
                         onSelect={field.onChange}
                         disabled={(date) => {
                           const subDeadline = form.getValues("subscriptionDeadline");
-                          return date < (subDeadline || new Date(new Date().setHours(0,0,0,0)));
+                          // Voting deadline must be after subscription deadline, or after today if subDeadline is not set
+                          const minDate = subDeadline || new Date(new Date().setHours(0,0,0,0));
+                          return date <= minDate; // Allow same day as subDeadline but not before
                         }}
                         initialFocus
                         locale={ptBR}
