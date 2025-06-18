@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -13,7 +14,8 @@ import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import PageTitle from "@/components/shared/PageTitle";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { db } from "@/lib/firebaseConfig";
+import { collection, addDoc, Timestamp } from "firebase/firestore";
 
 interface ProjectSubmitFormProps {
   editalId: string; // To associate the project with an edital
@@ -38,24 +40,41 @@ export default function ProjectSubmitForm({ editalId, editalName }: ProjectSubmi
 
   async function onSubmit(data: ProjectSubmitFormData) {
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    console.log({ ...data, editalId });
-    // Generate unique project URL (slugify name + timestamp/random string)
-    const projectUrl = `/project/${data.projectName.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
-    setIsLoading(false);
-    toast({
-      title: "Projeto Submetido!",
-      description: (
-        <div>
-          <p>Seu projeto "{data.projectName}" foi submetido com sucesso para o edital "{editalName}".</p>
-          <p className="mt-2">URL do Projeto: <a href={projectUrl} target="_blank" rel="noopener noreferrer" className="underline">{projectUrl}</a></p>
-          <p className="mt-1 text-xs">Uma confirmação (simulada) foi enviada para seu email.</p>
-        </div>
-      ),
-      duration: 7000,
-    });
-    form.reset();
+    try {
+      const projectData = {
+        ...data,
+        editalId: editalId,
+        editalName: editalName, // Storing for easier display later if needed
+        submittedAt: Timestamp.now(),
+        // Em um app real, você associaria o projeto a um `userId` do proponente logado
+      };
+
+      const docRef = await addDoc(collection(db, "projects"), projectData);
+      
+      const projectUrl = `/project/${docRef.id}`; // Use Firestore ID for a stable URL
+
+      toast({
+        title: "Projeto Submetido!",
+        description: (
+          <div>
+            <p>Seu projeto "{data.projectName}" foi submetido com sucesso para o edital "{editalName}".</p>
+            <p className="mt-2">ID do Projeto: {docRef.id}</p>
+            <p className="mt-1">URL do Projeto (exemplo): <a href={projectUrl} target="_blank" rel="noopener noreferrer" className="underline">{projectUrl}</a></p>
+          </div>
+        ),
+        duration: 7000,
+      });
+      form.reset();
+    } catch (error) {
+      console.error("Erro ao submeter projeto:", error);
+      toast({
+        title: "Erro ao Submeter Projeto",
+        description: "Ocorreu um erro ao tentar salvar o projeto. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (

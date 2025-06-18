@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -10,6 +11,8 @@ import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import PageTitle from "@/components/shared/PageTitle";
+import { db } from "@/lib/firebaseConfig";
+import { collection, addDoc, Timestamp, query, where, getDocs } from "firebase/firestore";
 
 interface ProjectVoteFormProps {
   editalId: string;
@@ -33,16 +36,50 @@ export default function ProjectVoteForm({ editalId, projectId, projectName }: Pr
 
   async function onSubmit(data: ProjectVoteFormData) {
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    console.log({ ...data, editalId, projectId });
-    setIsLoading(false);
-    toast({
-      title: "Voto Registrado!",
-      description: `Seu voto para o projeto "${projectName}" foi computado com sucesso. Obrigado por participar!`,
-      duration: 7000,
-    });
-    form.reset();
+    try {
+      // Opcional: Verificar se o CPF já votou neste projeto
+      // const votesQuery = query(
+      //   collection(db, "votes"),
+      //   where("projectId", "==", projectId),
+      //   where("cpf", "==", data.cpf)
+      // );
+      // const existingVotes = await getDocs(votesQuery);
+      // if (!existingVotes.empty) {
+      //   toast({
+      //     title: "Voto Duplicado",
+      //     description: "Este CPF já votou neste projeto.",
+      //     variant: "destructive",
+      //   });
+      //   setIsLoading(false);
+      //   return;
+      // }
+
+      const voteData = {
+        ...data,
+        editalId: editalId,
+        projectId: projectId,
+        projectName: projectName, // Storing for easier reference
+        votedAt: Timestamp.now(),
+      };
+
+      const docRef = await addDoc(collection(db, "votes"), voteData);
+      
+      toast({
+        title: "Voto Registrado!",
+        description: `Seu voto para o projeto "${projectName}" (ID: ${docRef.id}) foi computado com sucesso. Obrigado por participar!`,
+        duration: 7000,
+      });
+      form.reset();
+    } catch (error) {
+      console.error("Erro ao registrar voto:", error);
+      toast({
+        title: "Erro ao Registrar Voto",
+        description: "Ocorreu um erro ao tentar salvar seu voto. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (

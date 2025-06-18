@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm, useFieldArray } from "react-hook-form";
@@ -14,6 +15,8 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import PageTitle from "@/components/shared/PageTitle";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { db } from "@/lib/firebaseConfig";
+import { collection, addDoc, Timestamp, doc, setDoc } from "firebase/firestore";
 
 export default function ProponentProfileForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -28,6 +31,9 @@ export default function ProponentProfileForm() {
       phone: "",
       areaOfExpertise: "",
       entities: [],
+      // Em um app real, você buscaria o email do usuário logado (Firebase Auth) e usaria como ID aqui.
+      // Ou, se for um novo usuário, usaria o ID gerado pelo Firebase Auth.
+      // Por agora, o `id` não é usado ativamente para `addDoc`, mas seria para `setDoc`.
     },
   });
 
@@ -38,14 +44,41 @@ export default function ProponentProfileForm() {
 
   async function onSubmit(data: ProponentProfileFormData) {
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    console.log(data);
-    setIsLoading(false);
-    toast({
-      title: "Perfil Atualizado!",
-      description: "Suas informações foram salvas com sucesso.",
-    });
+    try {
+      // NOTA: Em uma aplicação real com autenticação, você usaria o ID do usuário logado
+      // para criar ou atualizar o documento do perfil. Ex:
+      // const userId = firebase.auth().currentUser.uid;
+      // await setDoc(doc(db, "proponents", userId), { ...data, updatedAt: Timestamp.now() });
+      //
+      // Como não temos autenticação completa aqui, usaremos addDoc, que criará um novo perfil
+      // a cada submissão. Isso é apenas para fins de demonstração da integração com Firestore.
+      const profileData = {
+        ...data,
+        // Removendo o campo `id` se ele existir nos dados, pois `addDoc` gera o ID.
+        // Se usasse `setDoc`, o `id` seria o ID do documento.
+        id: undefined, 
+        createdAt: Timestamp.now(), // Ou updatedAt se for uma atualização
+      };
+
+      const docRef = await addDoc(collection(db, "proponents"), profileData);
+      
+      toast({
+        title: "Perfil Salvo!",
+        description: `Suas informações foram salvas com sucesso. ID do Perfil: ${docRef.id}`,
+      });
+      // Não resetar o formulário aqui é comum para formulários de perfil,
+      // permitindo que o usuário veja os dados que acabou de salvar.
+      // form.reset(); 
+    } catch (error) {
+      console.error("Erro ao salvar perfil:", error);
+      toast({
+        title: "Erro ao Salvar Perfil",
+        description: "Ocorreu um erro ao tentar salvar suas informações. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (

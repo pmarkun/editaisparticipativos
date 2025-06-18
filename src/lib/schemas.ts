@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 
 export const LoginSchema = z.object({
@@ -27,12 +28,13 @@ const EntitySchema = z.object({
 });
 
 export const ProponentProfileSchema = z.object({
+  // id: z.string().optional(), // Opcional, usado se você quiser passar o ID do documento para atualização
   sex: z.string().optional(),
   race: z.string().optional(),
   address: z.string().min(5, "Endereço é obrigatório."),
   phone: z.string().min(10, "Telefone inválido.").regex(/^\(?\d{2}\)?[\s-]?\d{4,5}-?\d{4}$/, "Formato de telefone inválido."),
   areaOfExpertise: z.string().min(2, "Área de atuação é obrigatória."),
-  entities: z.array(EntitySchema).min(0), // Allow no entities initially, but can be 1 if required by logic
+  entities: z.array(EntitySchema).min(0), // Permite zero entidades
 });
 
 export const EditalCreateSchema = z.object({
@@ -54,8 +56,12 @@ export const ProjectSubmitSchema = z.object({
   location: z.string().min(5, "Localização do projeto é obrigatória."),
   beneficiaries: z.string().min(5, "Público-alvo / Beneficiários são obrigatórios."),
   value: z.preprocess(
-    (a) => parseFloat(z.string().parse(a)), // Convert string to number
-    z.number().positive("O valor do projeto deve ser positivo.")
+    (a) => {
+      if (typeof a === 'string') return parseFloat(a);
+      if (typeof a === 'number') return a;
+      return undefined; // ou lançar um erro/valor padrão
+    },
+    z.number({invalid_type_error: "Valor solicitado deve ser um número."}).positive("O valor do projeto deve ser positivo.")
   ),
   agreedToTerms: z.boolean().refine(val => val === true, {
     message: "Você deve concordar com os termos."

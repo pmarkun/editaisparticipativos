@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -11,6 +12,8 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { db } from "@/lib/firebaseConfig";
+import { collection, addDoc, Timestamp } from "firebase/firestore";
 // import { useRouter } from "next/navigation"; // Uncomment if using App Router navigation
 
 export default function SignupFormPhase1() {
@@ -30,16 +33,36 @@ export default function SignupFormPhase1() {
 
   async function onSubmit(data: SignupFormDataPhase1) {
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    console.log(data);
-    setIsLoading(false);
-    toast({
-      title: "Cadastro realizado!",
-      description: "Você será redirecionado para completar seu perfil.",
-    });
-    // On success: redirect to proponent profile page for phase 2
-    // router.push('/proponent/profile'); 
+    try {
+      // **IMPORTANTE**: Em uma aplicação real, você usaria o Firebase Authentication para criar usuários.
+      // NUNCA armazene senhas diretamente no Firestore.
+      // Aqui, estamos apenas simulando o armazenamento de nome e email.
+      const userToSave = {
+        name: data.name,
+        email: data.email,
+        createdAt: Timestamp.now(),
+        // Não salve data.password!
+      };
+
+      const docRef = await addDoc(collection(db, "users"), userToSave);
+      
+      toast({
+        title: "Cadastro realizado!",
+        description: `Usuário ${data.name} registrado (ID: ${docRef.id}). Você será redirecionado para completar seu perfil.`,
+      });
+      form.reset();
+      // On success: redirect to proponent profile page for phase 2
+      // router.push('/proponent/profile'); 
+    } catch (error) {
+      console.error("Erro ao cadastrar usuário:", error);
+      toast({
+        title: "Erro no Cadastro",
+        description: "Ocorreu um erro ao tentar criar sua conta. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
