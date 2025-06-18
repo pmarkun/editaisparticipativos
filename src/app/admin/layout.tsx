@@ -34,14 +34,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Criar Edital">
-                  <Link href="/admin/editais/new">
-                    <FileText className="opacity-0 group-data-[state=expanded]:opacity-100 transition-opacity duration-200" /> {/* Hack for spacing when collapsed */}
-                    <span>Novo Edital</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Gerenciar Usuários">
                   <Link href="/admin/users">
@@ -69,7 +61,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             </SidebarMenu>
           </SidebarContent>
            <SidebarFooter className="p-2">
-             <SidebarMenuButton variant="ghost" className="justify-start text-muted-foreground hover:text-foreground">
+             <SidebarMenuButton className="justify-start text-muted-foreground hover:text-foreground">
                 <LogOut className="mr-2" /> Sair
              </SidebarMenuButton>
           </SidebarFooter>

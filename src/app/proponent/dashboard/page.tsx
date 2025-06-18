@@ -19,10 +19,10 @@ export default function ProponentDashboardPage() {
             <CardDescription>Visualize e gerencie os projetos que você submeteu.</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">Você ainda não submeteu nenhum projeto.</p>
+            <p className="text-sm text-muted-foreground mb-4">Gerencie seus projetos submetidos e acompanhe o status.</p>
             <Button asChild>
-              <Link href="/editais"> {/* Link to available editais to submit a project */}
-                <PlusCircle className="mr-2 h-4 w-4" /> Ver Editais Abertos
+              <Link href="/proponent/projects">
+                <FileText className="mr-2 h-4 w-4" /> Ver Meus Projetos
               </Link>
             </Button>
           </CardContent>
@@ -31,16 +31,36 @@ export default function ProponentDashboardPage() {
         <Card className="shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Vote className="h-6 w-6 text-accent" />
-              <span>Editais para Participar</span>
+              <PlusCircle className="h-6 w-6 text-accent" />
+              <span>Submeter Projeto</span>
             </CardTitle>
-            <CardDescription>Explore os editais abertos para submissão ou votação.</CardDescription>
+            <CardDescription>Explore os editais abertos e submeta seus projetos.</CardDescription>
           </CardHeader>
           <CardContent>
-             <p className="text-sm text-muted-foreground mb-4">Nenhum edital aberto no momento (simulado).</p>
+            <p className="text-sm text-muted-foreground mb-4">Veja os editais disponíveis para submissão de projetos.</p>
             <Button variant="outline" asChild>
               <Link href="/editais">
-                Explorar Editais
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Ver Editais Disponíveis
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-lg hover:shadow-xl transition-shadow">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Vote className="h-6 w-6 text-secondary" />
+              <span>Participar da Votação</span>
+            </CardTitle>
+            <CardDescription>Vote nos projetos submetidos em editais ativos.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">Participe da votação dos projetos em andamento.</p>
+            <Button variant="secondary" asChild>
+              <Link href="/editais">
+                <Vote className="mr-2 h-4 w-4" />
+                Ver Votações Ativas
               </Link>
             </Button>
           </CardContent>
