@@ -9,6 +9,7 @@ import Image from "next/image";
 import { doc, getDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/firebase/client";
 import { getProjectIdFromSlug, getEditalSlugFromId } from "@/lib/slug-helpers";
+import ProjectVoteForm from "@/components/edital/ProjectVoteForm";
 
 interface ProjectDetailsData {
   id: string;
@@ -213,6 +214,13 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
             </Link>
         </CardFooter>
       </Card>
+      <div className="mt-8">
+        <ProjectVoteForm
+          editalId={project.editalId}
+          projectId={project.id}
+          projectName={project.name}
+        />
+      </div>
     </div>
   );
 }
