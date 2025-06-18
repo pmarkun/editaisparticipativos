@@ -7,6 +7,7 @@ import { ArrowRight, CalendarDays, Users, Vote as VoteIcon } from "lucide-react"
 import Image from "next/image";
 import { doc, getDoc, collection, query, where, getDocs, orderBy, Timestamp } from "firebase/firestore";
 import { db } from "@/firebase/client";
+import { getEditalIdFromSlug } from "@/lib/slug-helpers";
 
 interface EditalData {
   id: string;
@@ -82,8 +83,23 @@ function formatDate(date: Date): string {
   });
 }
 
-export default async function EditalDetailPage({ params }: { params: { editalId: string } }) {
-  const { edital: editalData, projects } = await getEditalAndProjects(params.editalId);
+export default async function EditalDetailPage({ params }: { params: { editalSlug: string } }) {
+  // Primeiro, encontrar o ID do edital a partir do slug
+  const editalId = await getEditalIdFromSlug(params.editalSlug);
+  
+  if (!editalId) {
+    return (
+      <div className="text-center py-10">
+        <PageTitle className="text-2xl !text-destructive !mb-2">Edital não encontrado</PageTitle>
+        <p className="text-muted-foreground">O edital que você está tentando acessar não existe ou não foi encontrado.</p>
+        <Button asChild variant="link" className="mt-4">
+          <Link href="/editais">Voltar para Editais</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  const { edital: editalData, projects } = await getEditalAndProjects(editalId);
 
   if (!editalData) {
     return (
@@ -138,7 +154,7 @@ export default async function EditalDetailPage({ params }: { params: { editalId:
               <p className="flex items-center md:justify-end gap-2"><CalendarDays className="h-4 w-4 text-accent" /> <strong>Votação até:</strong> {formatDate(editalData.votingDeadline)}</p>
               {subscriptionActive && (
                 <Button asChild size="sm" className="w-full md:w-auto mt-2">
-                  <Link href={`/edital/${editalData.id}/submit`}>
+                  <Link href={`/edital/${params.editalSlug}/submit`}>
                     <Users className="mr-2 h-4 w-4" /> Submeter Projeto
                   </Link>
                 </Button>
@@ -172,7 +188,7 @@ export default async function EditalDetailPage({ params }: { params: { editalId:
                   <CardFooter>
                     {votingActive ? (
                       <Button asChild className="w-full" variant="default">
-                        <Link href={`/edital/${editalData.id}/project/${project.id}/vote`}>
+                        <Link href={`/edital/${params.editalSlug}/project/${project.id}/vote`}>
                           <VoteIcon className="mr-2 h-4 w-4" /> Votar Neste Projeto
                         </Link>
                       </Button>

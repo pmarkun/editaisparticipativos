@@ -84,18 +84,18 @@ export default async function EditaisPage() {
             
             let statusText = "Ver Detalhes";
             let statusColor = "bg-primary/10 text-primary";
-            let actionPath = `/edital/${edital.id}`;
+            let actionPath = `/edital/${edital.slug || edital.id}`;
             let actionButtonText = "Ver Edital";
 
             if (subscriptionActive) {
               statusText = "Inscrições Abertas";
               statusColor = "bg-green-100 text-green-700 dark:bg-green-700/30 dark:text-green-300";
-              actionPath = `/edital/${edital.id}/submit`;
+              actionPath = `/edital/${edital.slug || edital.id}/submit`;
               actionButtonText = "Submeter Projeto";
             } else if (votingActive) {
               statusText = "Votação Aberta";
               statusColor = "bg-blue-100 text-blue-700 dark:bg-blue-700/30 dark:text-blue-300";
-              actionPath = `/edital/${edital.id}`; 
+              actionPath = `/edital/${edital.slug || edital.id}`; 
               actionButtonText = "Ver Projetos e Votar";
             } else if (isClosed) {
                 statusText = "Encerrado";
@@ -118,7 +118,7 @@ export default async function EditaisPage() {
                 </div>
                 <CardHeader className="pb-3">
                   <CardTitle className="font-headline text-xl leading-tight hover:text-primary transition-colors">
-                    <Link href={`/edital/${edital.id}`}>{edital.name}</Link>
+                    <Link href={`/edital/${edital.slug || edital.id}`}>{edital.name}</Link>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="flex-grow">

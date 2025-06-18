@@ -7,6 +7,7 @@ import { db } from "@/firebase/client";
 import PageTitle from "@/components/shared/PageTitle";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { getEditalIdFromSlug } from "@/lib/slug-helpers";
 
 interface ProjectDetails {
   id: string;
@@ -45,7 +46,7 @@ async function getProjectDetails(projectId: string): Promise<ProjectDetails | nu
   }
 }
 
-export default async function ProjectVotePage({ params }: { params: { editalId: string, projectId: string } }) {
+export default async function ProjectVotePage({ params }: { params: { editalSlug: string, projectId: string } }) {
   const projectDetails = await getProjectDetails(params.projectId);
 
   if (!projectDetails) {
@@ -54,7 +55,7 @@ export default async function ProjectVotePage({ params }: { params: { editalId: 
         <PageTitle className="text-2xl !text-destructive !mb-2">Projeto não encontrado</PageTitle>
         <p className="text-muted-foreground mb-4">O projeto que você está tentando acessar para votação não existe ou não está mais disponível.</p>
         <Button asChild variant="link">
-          <Link href={`/edital/${params.editalId || 'default-edital-id'}`}>Voltar ao Edital</Link>
+          <Link href={`/edital/${params.editalSlug}`}>Voltar ao Edital</Link>
         </Button>
       </div>
     );

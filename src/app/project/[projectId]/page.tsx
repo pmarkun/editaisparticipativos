@@ -8,6 +8,7 @@ import { CalendarCheck, DollarSign, Target, UserCircle, MapPin } from "lucide-re
 import Image from "next/image";
 import { doc, getDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/firebase/client";
+import { getEditalSlugFromId } from "@/lib/slug-helpers";
 
 interface ProjectDetailsData {
   id: string;
@@ -22,6 +23,7 @@ interface ProjectDetailsData {
   aiHint: string;   // placeholder
   editalId: string;
   editalName: string;
+  editalSlug?: string; // Slug do edital
   slug?: string;    // Slug gerado a partir do nome do projeto
   // proponentName: string; // Not directly available from project document
 }
@@ -33,6 +35,9 @@ async function getProjectDetails(projectId: string): Promise<ProjectDetailsData 
 
     if (projectSnap.exists()) {
       const data = projectSnap.data();
+      const editalId = data.editalId || "unknown-edital";
+      const editalSlug = await getEditalSlugFromId(editalId);
+      
       return {
         id: projectSnap.id,
         name: data.projectName || "Projeto Desconhecido",
@@ -44,8 +49,9 @@ async function getProjectDetails(projectId: string): Promise<ProjectDetailsData 
         submissionDate: data.submittedAt instanceof Timestamp ? data.submittedAt.toDate() : new Date(),
         imageUrl: "https://placehold.co/800x450.png", // Placeholder
         aiHint: data.projectName ? data.projectName.toLowerCase().split(" ").slice(0,2).join(" ") : "project details",
-        editalId: data.editalId || "unknown-edital",
+        editalId: editalId,
         editalName: data.editalName || "Edital Desconhecido",
+        editalSlug: editalSlug || editalId, // Use slug ou fallback para ID
         slug: data.slug || "", // Incluir slug se existir
         // proponentName: "Nome do Proponente" // This would need to be fetched/joined if stored separately
       };
@@ -163,7 +169,7 @@ export default async function ProjectDetailsPage({ params }: { params: { project
                 <p className="font-medium text-foreground">{project.proponentName}</p> 
                 */}
                 <p className="text-muted-foreground text-sm">Informações do proponente não disponíveis diretamente aqui.</p>
-                <Link href={`/edital/${project.editalId}`} className="text-xs text-primary hover:underline block mt-1">
+                <Link href={`/edital/${project.editalSlug}`} className="text-xs text-primary hover:underline block mt-1">
                   Ver Edital: {project.editalName}
                 </Link>
               </CardContent>
@@ -173,7 +179,7 @@ export default async function ProjectDetailsPage({ params }: { params: { project
               {/* Voting button might not be relevant here or needs complex logic to determine if active
               {isVotingActive && (
                 <Button size="lg" className="w-full" asChild>
-                  <Link href={`/edital/${project.editalId}/project/${project.id}/vote`}>
+                  <Link href={`/edital/${project.editalSlug}/project/${project.id}/vote`}>
                     Votar neste Projeto
                   </Link>
                 </Button>
@@ -184,7 +190,7 @@ export default async function ProjectDetailsPage({ params }: { params: { project
           </aside>
         </CardContent>
         <CardFooter className="bg-muted/30 p-4 md:p-6 text-center">
-            <Link href={`/edital/${project.editalId}`} className="text-sm text-primary hover:underline">
+            <Link href={`/edital/${project.editalSlug}`} className="text-sm text-primary hover:underline">
                 &larr; Voltar para a lista de projetos do edital: {project.editalName}
             </Link>
         </CardFooter>

@@ -6,6 +6,7 @@ import { db } from "@/firebase/client";
 import PageTitle from "@/components/shared/PageTitle";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { getEditalIdFromSlug } from "@/lib/slug-helpers";
 
 interface EditalDetails {
   id: string;
@@ -44,8 +45,23 @@ async function getEditalDetails(editalId: string): Promise<EditalDetails | null>
   }
 }
 
-export default async function ProjectSubmitPage({ params }: { params: { editalId: string } }) {
-  const editalDetails = await getEditalDetails(params.editalId);
+export default async function ProjectSubmitPage({ params }: { params: { editalSlug: string } }) {
+  // Primeiro, encontrar o ID do edital a partir do slug
+  const editalId = await getEditalIdFromSlug(params.editalSlug);
+  
+  if (!editalId) {
+    return (
+      <div className="text-center py-10">
+        <PageTitle className="text-2xl !text-destructive !mb-2">Edital não encontrado</PageTitle>
+        <p className="text-muted-foreground mb-4">O edital para o qual você está tentando submeter um projeto não foi encontrado, não existe ou não está mais disponível para submissões.</p>
+        <Button asChild variant="link">
+          <Link href="/editais">Voltar para Editais</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  const editalDetails = await getEditalDetails(editalId);
 
   if (!editalDetails) {
     return (
