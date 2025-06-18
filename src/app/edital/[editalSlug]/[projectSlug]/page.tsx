@@ -75,9 +75,12 @@ function formatDate(date: Date): string {
   });
 }
 
-export default async function ProjectDetailsPage({ params }: { params: { editalSlug: string, projectSlug: string } }) {
+export default async function ProjectDetailsPage({ params }: { params: Promise<{ editalSlug: string, projectSlug: string }> }) {
+  // Await params before accessing its properties
+  const resolvedParams = await params;
+  
   // Primeiro, encontrar o ID do projeto a partir dos slugs
-  const projectId = await getProjectIdFromSlug(params.editalSlug, params.projectSlug);
+  const projectId = await getProjectIdFromSlug(resolvedParams.editalSlug, resolvedParams.projectSlug);
   
   if (!projectId) {
     return (
@@ -85,7 +88,7 @@ export default async function ProjectDetailsPage({ params }: { params: { editalS
         <PageTitle className="text-2xl !text-destructive !mb-2">Projeto não encontrado</PageTitle>
         <p className="text-muted-foreground mb-4">O projeto que você está tentando acessar não existe ou não foi encontrado neste edital.</p>
          <Button asChild variant="link">
-          <Link href={`/edital/${params.editalSlug}`}>Voltar para o Edital</Link>
+          <Link href={`/edital/${resolvedParams.editalSlug}`}>Voltar para o Edital</Link>
         </Button>
       </div>
     );
@@ -99,7 +102,7 @@ export default async function ProjectDetailsPage({ params }: { params: { editalS
         <PageTitle className="text-2xl !text-destructive !mb-2">Projeto não encontrado</PageTitle>
         <p className="text-muted-foreground mb-4">O projeto que você está tentando acessar não existe.</p>
          <Button asChild variant="link">
-          <Link href={`/edital/${params.editalSlug}`}>Voltar para o Edital</Link>
+          <Link href={`/edital/${resolvedParams.editalSlug}`}>Voltar para o Edital</Link>
         </Button>
       </div>
     );

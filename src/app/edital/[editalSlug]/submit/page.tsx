@@ -45,9 +45,12 @@ async function getEditalDetails(editalId: string): Promise<EditalDetails | null>
   }
 }
 
-export default async function ProjectSubmitPage({ params }: { params: { editalSlug: string } }) {
+export default async function ProjectSubmitPage({ params }: { params: Promise<{ editalSlug: string }> }) {
+  // Await params before accessing its properties
+  const resolvedParams = await params;
+  
   // Primeiro, encontrar o ID do edital a partir do slug
-  const editalId = await getEditalIdFromSlug(params.editalSlug);
+  const editalId = await getEditalIdFromSlug(resolvedParams.editalSlug);
   
   if (!editalId) {
     return (
@@ -86,7 +89,7 @@ export default async function ProjectSubmitPage({ params }: { params: { editalSl
       <ProjectSubmitForm 
         editalId={editalDetails.id} 
         editalName={editalDetails.name} 
-        editalSlug={params.editalSlug}
+        editalSlug={resolvedParams.editalSlug}
       />
     </div>
   );

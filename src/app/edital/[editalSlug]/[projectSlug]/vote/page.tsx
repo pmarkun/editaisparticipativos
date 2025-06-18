@@ -46,9 +46,12 @@ async function getProjectDetails(projectId: string): Promise<ProjectDetails | nu
   }
 }
 
-export default async function ProjectVotePage({ params }: { params: { editalSlug: string, projectSlug: string } }) {
+export default async function ProjectVotePage({ params }: { params: Promise<{ editalSlug: string, projectSlug: string }> }) {
+  // Await params before accessing its properties
+  const resolvedParams = await params;
+  
   // Primeiro, encontrar o ID do projeto a partir dos slugs
-  const projectId = await getProjectIdFromSlug(params.editalSlug, params.projectSlug);
+  const projectId = await getProjectIdFromSlug(resolvedParams.editalSlug, resolvedParams.projectSlug);
   
   if (!projectId) {
     return (
@@ -56,7 +59,7 @@ export default async function ProjectVotePage({ params }: { params: { editalSlug
         <PageTitle className="text-2xl !text-destructive !mb-2">Projeto não encontrado</PageTitle>
         <p className="text-muted-foreground mb-4">O projeto que você está tentando acessar para votação não existe ou não está mais disponível neste edital.</p>
         <Button asChild variant="link">
-          <Link href={`/edital/${params.editalSlug}`}>Voltar ao Edital</Link>
+          <Link href={`/edital/${resolvedParams.editalSlug}`}>Voltar ao Edital</Link>
         </Button>
       </div>
     );
@@ -70,7 +73,7 @@ export default async function ProjectVotePage({ params }: { params: { editalSlug
         <PageTitle className="text-2xl !text-destructive !mb-2">Projeto não encontrado</PageTitle>
         <p className="text-muted-foreground mb-4">O projeto que você está tentando acessar para votação não existe ou não está mais disponível.</p>
         <Button asChild variant="link">
-          <Link href={`/edital/${params.editalSlug}`}>Voltar ao Edital</Link>
+          <Link href={`/edital/${resolvedParams.editalSlug}`}>Voltar ao Edital</Link>
         </Button>
       </div>
     );

@@ -83,9 +83,12 @@ function formatDate(date: Date): string {
   });
 }
 
-export default async function EditalDetailPage({ params }: { params: { editalSlug: string } }) {
+export default async function EditalDetailPage({ params }: { params: Promise<{ editalSlug: string }> }) {
+  // Await params before accessing its properties
+  const resolvedParams = await params;
+  
   // Primeiro, encontrar o ID do edital a partir do slug
-  const editalId = await getEditalIdFromSlug(params.editalSlug);
+  const editalId = await getEditalIdFromSlug(resolvedParams.editalSlug);
   
   if (!editalId) {
     return (
@@ -154,7 +157,7 @@ export default async function EditalDetailPage({ params }: { params: { editalSlu
               <p className="flex items-center md:justify-end gap-2"><CalendarDays className="h-4 w-4 text-accent" /> <strong>Votação até:</strong> {formatDate(editalData.votingDeadline)}</p>
               {subscriptionActive && (
                 <Button asChild size="sm" className="w-full md:w-auto mt-2">
-                  <Link href={`/edital/${params.editalSlug}/submit`}>
+                  <Link href={`/edital/${resolvedParams.editalSlug}/submit`}>
                     <Users className="mr-2 h-4 w-4" /> Submeter Projeto
                   </Link>
                 </Button>
@@ -188,13 +191,13 @@ export default async function EditalDetailPage({ params }: { params: { editalSlu
                   <CardFooter>
                     {votingActive ? (
                       <Button asChild className="w-full" variant="default">
-                        <Link href={`/edital/${params.editalSlug}/${project.slug || project.id}/vote`}>
+                        <Link href={`/edital/${resolvedParams.editalSlug}/${project.slug || project.id}/vote`}>
                           <VoteIcon className="mr-2 h-4 w-4" /> Votar Neste Projeto
                         </Link>
                       </Button>
                     ) : (
                        <Button asChild className="w-full" variant="outline">
-                        <Link href={`/edital/${params.editalSlug}/${project.slug || project.id}`}> 
+                        <Link href={`/edital/${resolvedParams.editalSlug}/${project.slug || project.id}`}> 
                            Ver Detalhes <ArrowRight className="ml-2 h-4 w-4" />
                         </Link>
                       </Button>
