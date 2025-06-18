@@ -69,8 +69,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             </SidebarMenu>
           </SidebarContent>
            <SidebarFooter className="p-2">
-             <SidebarMenuButton variant="ghost" className="justify-start text-muted-foreground hover:text-foreground">
-                <LogOut className="mr-2" /> Sair
+             <SidebarMenuButton variant="outline" className="justify-start text-muted-foreground hover:text-foreground">
+               <LogOut className="mr-2" /> Sair
              </SidebarMenuButton>
           </SidebarFooter>
         </Sidebar>

@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowRight, Calendar, CheckCircle, Clock } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { collection, getDocs, query, orderBy, where, Timestamp } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, where, Timestamp, doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/client";
 
 interface Edital {
@@ -62,6 +62,41 @@ async function getEditais(): Promise<{ openEditais: Edital[], closedEditais: Edi
     console.error("Erro ao buscar editais:", error);
     return { openEditais: [], closedEditais: [] };
   }
+}
+
+interface ThemeConfig {
+  palette: 'blue' | 'green' | 'wine';
+  heroTitle: string;
+  heroSubtitle: string;
+  heroImageUrl: string;
+}
+
+async function getThemeConfig(): Promise<ThemeConfig> {
+  const defaults: ThemeConfig = {
+    palette: 'blue',
+    heroTitle: 'Editais Participativos',
+    heroSubtitle:
+      'Transparência, participação e democracia na gestão de recursos públicos. Submeta projetos, vote nas melhores propostas e acompanhe o desenvolvimento da sua comunidade.',
+    heroImageUrl:
+      'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80',
+  };
+
+  try {
+    const snap = await getDoc(doc(db, 'config', 'theme'));
+    if (snap.exists()) {
+      const data = snap.data();
+      return {
+        palette: (data.palette as ThemeConfig['palette']) || defaults.palette,
+        heroTitle: data.heroTitle || defaults.heroTitle,
+        heroSubtitle: data.heroSubtitle || defaults.heroSubtitle,
+        heroImageUrl: data.heroImageUrl || defaults.heroImageUrl,
+      };
+    }
+  } catch (err) {
+    console.error('Erro ao buscar configuração de tema', err);
+  }
+
+  return defaults;
 }
 
 function getEditalStatus(edital: Edital): { status: string, color: string, icon: React.ReactNode } {
@@ -142,6 +177,7 @@ function EditalCard({ edital, isOpen }: { edital: Edital, isOpen: boolean }) {
 
 export default async function Home() {
   const { openEditais, closedEditais } = await getEditais();
+  const theme = await getThemeConfig();
 
   return (
     <div className="min-h-screen">
@@ -149,7 +185,7 @@ export default async function Home() {
       <section className="relative bg-gradient-to-r from-primary to-primary/80 text-primary-foreground">
         <div className="absolute inset-0">
           <Image
-            src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80"
+            src={theme.heroImageUrl}
             alt="Participação cidadã"
             fill
             className="object-cover opacity-20"
@@ -158,11 +194,10 @@ export default async function Home() {
         </div>
         <div className="relative z-10 container mx-auto px-4 py-20 text-center">
           <h1 className="font-headline text-4xl md:text-6xl font-bold mb-6">
-            Editais Participativos
+            {theme.heroTitle}
           </h1>
           <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto leading-relaxed">
-            Transparência, participação e democracia na gestão de recursos públicos. 
-            Submeta projetos, vote nas melhores propostas e acompanhe o desenvolvimento da sua comunidade.
+            {theme.heroSubtitle}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" variant="secondary" asChild>

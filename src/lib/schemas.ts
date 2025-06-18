@@ -86,6 +86,13 @@ export const ProjectVoteSchema = z.object({
   phone: z.string().min(10, "Telefone inválido.").regex(/^\(?\d{2}\)?[\s-]?\d{4,5}-?\d{4}$/, "Formato de telefone inválido."),
 });
 
+export const ThemeConfigSchema = z.object({
+  palette: z.enum(["blue", "green", "wine"]),
+  heroTitle: z.string().min(3, "Título é obrigatório."),
+  heroSubtitle: z.string().min(3, "Subtítulo é obrigatório."),
+  heroImageUrl: z.string().url("URL inválida").optional().or(z.literal("")),
+});
+
 export type LoginFormData = z.infer<typeof LoginSchema>;
 export type SignupFormDataPhase1 = z.infer<typeof SignupSchemaPhase1>;
 export type ForgotPasswordFormData = z.infer<typeof ForgotPasswordSchema>;
@@ -94,3 +101,4 @@ export type EntityFormData = z.infer<typeof EntitySchema>;
 export type EditalCreateFormData = z.infer<typeof EditalCreateSchema>;
 export type ProjectSubmitFormData = z.infer<typeof ProjectSubmitSchema>;
 export type ProjectVoteFormData = z.infer<typeof ProjectVoteSchema>;
+export type ThemeConfigData = z.infer<typeof ThemeConfigSchema>;
