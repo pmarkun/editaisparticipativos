@@ -21,6 +21,7 @@ interface ProjectDetailsData {
   aiHint: string;   // placeholder
   editalId: string;
   editalName: string;
+  slug?: string;    // Slug gerado a partir do nome do projeto
   // proponentName: string; // Not directly available from project document
 }
 
@@ -44,6 +45,7 @@ async function getProjectDetails(projectId: string): Promise<ProjectDetailsData 
         aiHint: data.projectName ? data.projectName.toLowerCase().split(" ").slice(0,2).join(" ") : "project details",
         editalId: data.editalId || "unknown-edital",
         editalName: data.editalName || "Edital Desconhecido",
+        slug: data.slug || "", // Incluir slug se existir
         // proponentName: "Nome do Proponente" // This would need to be fetched/joined if stored separately
       };
     }

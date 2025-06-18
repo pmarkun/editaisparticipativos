@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import PageTitle from "@/components/shared/PageTitle";
 import { db } from "@/firebase/client";
 import { collection, addDoc, Timestamp } from "firebase/firestore";
+import { generateSlug } from "@/lib/utils";
 
 interface ProjectSubmitFormProps {
   editalId: string; // To associate the project with an edital
@@ -41,8 +42,12 @@ export default function ProjectSubmitForm({ editalId, editalName }: ProjectSubmi
   async function onSubmit(data: ProjectSubmitFormData) {
     setIsLoading(true);
     try {
+      // Gerar slug a partir do nome do projeto
+      const slug = generateSlug(data.projectName);
+      
       const projectData = {
         ...data,
+        slug: slug,
         editalId: editalId,
         editalName: editalName, // Storing for easier display later if needed
         submittedAt: Timestamp.now(),
@@ -58,7 +63,7 @@ export default function ProjectSubmitForm({ editalId, editalName }: ProjectSubmi
         description: (
           <div>
             <p>Seu projeto "{data.projectName}" foi submetido com sucesso para o edital "{editalName}".</p>
-            <p className="mt-2">ID do Projeto: {docRef.id}</p>
+            <p className="mt-2">Slug: {slug}</p>
             <p className="mt-1">URL do Projeto (exemplo): <a href={projectUrl} target="_blank" rel="noopener noreferrer" className="underline">{projectUrl}</a></p>
           </div>
         ),

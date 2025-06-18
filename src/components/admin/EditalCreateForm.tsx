@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import PageTitle from "@/components/shared/PageTitle";
 import { collection, addDoc } from "firebase/firestore";
 import { db } from "@/firebase/client"; // Importar configuração do Firebase
+import { generateSlug } from "@/lib/utils";
 
 export default function EditalCreateForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -36,15 +37,19 @@ export default function EditalCreateForm() {
   async function onSubmit(data: EditalCreateFormData) {
     setIsLoading(true);
     try {
+      // Gerar slug a partir do nome do edital
+      const slug = generateSlug(data.name);
+      
       // Salvar dados no Firestore
       const docRef = await addDoc(collection(db, "editais"), {
         ...data,
+        slug: slug,
         createdAt: new Date(), // Adicionar timestamp de criação
       });
       
       toast({
         title: "Edital Criado!",
-        description: `O edital "${data.name}" foi criado com sucesso. ID: ${docRef.id}`,
+        description: `O edital "${data.name}" foi criado com sucesso. Slug: ${slug}`,
       });
       form.reset();
     } catch (error) {

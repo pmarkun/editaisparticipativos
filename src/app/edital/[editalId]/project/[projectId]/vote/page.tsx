@@ -16,6 +16,7 @@ interface ProjectDetails {
   // proponentName: string; // Not directly available from project document
   imageUrl: string; // Placeholder
   aiHint: string; // Placeholder
+  slug?: string;    // Slug gerado a partir do nome do projeto
   // You might want to fetch edital voting deadlines here to ensure voting is still active
 }
 
@@ -33,6 +34,7 @@ async function getProjectDetails(projectId: string): Promise<ProjectDetails | nu
         description: data.description || "Sem descrição disponível.",
         imageUrl: "https://placehold.co/600x400.png", // Placeholder
         aiHint: data.projectName ? data.projectName.toLowerCase().split(" ").slice(0,2).join(" ") : "project idea",
+        slug: data.slug || "", // Incluir slug se existir
         // proponentName: "Nome do Proponente" // This would need to be fetched/joined if stored separately
       };
     }

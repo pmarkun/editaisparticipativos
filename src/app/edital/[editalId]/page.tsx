@@ -16,6 +16,7 @@ interface EditalData {
   votingDeadline: Date;
   imageUrl: string; // For placeholder
   aiHint: string;   // For placeholder
+  slug?: string;    // Slug gerado a partir do nome
 }
 
 interface ProjectData {
@@ -25,6 +26,7 @@ interface ProjectData {
   summary: string; // from project.description
   imageUrl: string; // For placeholder
   aiHint: string;   // For placeholder
+  slug?: string;    // Slug gerado a partir do nome do projeto
 }
 
 async function getEditalAndProjects(editalId: string): Promise<{ edital: EditalData | null; projects: ProjectData[] }> {
@@ -44,6 +46,7 @@ async function getEditalAndProjects(editalId: string): Promise<{ edital: EditalD
         votingDeadline: data.votingDeadline instanceof Timestamp ? data.votingDeadline.toDate() : new Date(),
         imageUrl: "https://placehold.co/1200x400.png", // Placeholder
         aiHint: data.name ? data.name.toLowerCase().split(" ").slice(0,2).join(" ") : "community art", // Basic AI hint
+        slug: data.slug || "", // Incluir slug se existir
       };
     }
 
@@ -59,6 +62,7 @@ async function getEditalAndProjects(editalId: string): Promise<{ edital: EditalD
         summary: data.description || "Sem resumo.",
         imageUrl: "https://placehold.co/400x250.png", // Placeholder
         aiHint: data.projectName ? data.projectName.toLowerCase().split(" ").slice(0,2).join(" ") : "project idea", // Basic AI hint
+        slug: data.slug || "", // Incluir slug se existir
       };
     });
 

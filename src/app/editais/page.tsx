@@ -16,6 +16,7 @@ interface Edital {
   votingDeadline: Date;
   imageUrl: string; // For placeholder
   aiHint: string;   // For placeholder
+  slug?: string;    // Slug gerado a partir do nome
   // createdAt is fetched for sorting but not directly displayed on card here
 }
 
@@ -34,7 +35,8 @@ async function fetchEditais(): Promise<Edital[]> {
         subscriptionDeadline: data.subscriptionDeadline instanceof Timestamp ? data.subscriptionDeadline.toDate() : new Date(),
         votingDeadline: data.votingDeadline instanceof Timestamp ? data.votingDeadline.toDate() : new Date(),
         imageUrl: "https://placehold.co/400x250.png", // Placeholder
-        aiHint: data.name ? data.name.toLowerCase().split(" ").slice(0,2).join(" ") : "culture community" // Basic AI hint from name
+        aiHint: data.name ? data.name.toLowerCase().split(" ").slice(0,2).join(" ") : "culture community", // Basic AI hint from name
+        slug: data.slug || "", // Incluir slug se existir
       };
     });
     return editaisList;

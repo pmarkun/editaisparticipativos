@@ -11,6 +11,7 @@ interface EditalDetails {
   id: string;
   name: string;
   description: string;
+  slug?: string;    // Slug gerado a partir do nome
   // subscriptionDeadline: Date; // Could be useful for validation here
 }
 
@@ -32,6 +33,7 @@ async function getEditalDetails(editalId: string): Promise<EditalDetails | null>
         id: editalSnap.id,
         name: data.name || "Edital não encontrado",
         description: data.description || "Sem descrição.",
+        slug: data.slug || "", // Incluir slug se existir
         // subscriptionDeadline: subDeadline,
       };
     }
