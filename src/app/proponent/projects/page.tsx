@@ -72,8 +72,7 @@ export default function MyProjectsPage() {
         // Buscar projetos do usuário
         const projectsQuery = query(
           collection(db, "projects"),
-          where("userId", "==", userData.uid),
-          orderBy("submittedAt", "desc")
+          where("userId", "==", userData.uid)
         );
         
         const projectsSnapshot = await getDocs(projectsQuery);

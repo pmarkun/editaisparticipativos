@@ -16,7 +16,7 @@ import { ptBR } from "date-fns/locale";
 import { useState, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import PageTitle from "@/components/shared/PageTitle";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/client";
 import { generateSlug } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,7 +28,13 @@ const MDEditor = dynamic(
   { ssr: false }
 );
 
-export default function EditalCreateForm() {
+interface EditalCreateFormProps {
+  editalId?: string;
+  initialData?: Partial<EditalCreateFormData>;
+  onSuccess?: () => void;
+}
+
+export default function EditalCreateForm({ editalId, initialData, onSuccess }: EditalCreateFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -37,12 +43,23 @@ export default function EditalCreateForm() {
   const form = useForm<EditalCreateFormData>({
     resolver: zodResolver(EditalCreateSchema),
     defaultValues: {
-      name: "",
-      description: "",
-      detailedDescription: "",
-      imageUrl: "",
+      name: initialData?.name || "",
+      description: initialData?.description || "",
+      detailedDescription: initialData?.detailedDescription || "",
+      imageUrl: initialData?.imageUrl || "",
+      subscriptionStartDate: initialData?.subscriptionStartDate,
+      subscriptionEndDate: initialData?.subscriptionEndDate,
+      votingStartDate: initialData?.votingStartDate,
+      votingEndDate: initialData?.votingEndDate,
     },
   });
+
+  // Set image preview if editing and has imageUrl
+  useEffect(() => {
+    if (initialData?.imageUrl) {
+      setImagePreview(initialData.imageUrl);
+    }
+  }, [initialData?.imageUrl]);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -88,31 +105,51 @@ export default function EditalCreateForm() {
   async function onSubmit(data: EditalCreateFormData) {
     setIsLoading(true);
     try {
-      // Gerar slug a partir do nome do edital
-      const slug = generateSlug(data.name);
-      
-      // Salvar dados no Firestore
-      const docRef = await addDoc(collection(db, "editais"), {
-        ...data,
-        slug: slug,
-        createdAt: new Date(),
-        // Convert dates to ensure proper format
-        subscriptionStartDate: data.subscriptionStartDate,
-        subscriptionEndDate: data.subscriptionEndDate,
-        votingStartDate: data.votingStartDate,
-        votingEndDate: data.votingEndDate,
-      });
-      
-      toast({
-        title: "Edital Criado!",
-        description: `O edital "${data.name}" foi criado com sucesso.`,
-      });
-      form.reset();
-      setImagePreview("");
+      if (editalId) {
+        // Update existing edital
+        const editalRef = doc(db, "editais", editalId);
+        await updateDoc(editalRef, {
+          ...data,
+          updatedAt: new Date(),
+          // Convert dates to ensure proper format
+          subscriptionStartDate: data.subscriptionStartDate,
+          subscriptionEndDate: data.subscriptionEndDate,
+          votingStartDate: data.votingStartDate,
+          votingEndDate: data.votingEndDate,
+        });
+        
+        toast({
+          title: "Edital Atualizado!",
+          description: `O edital "${data.name}" foi atualizado com sucesso.`,
+        });
+        
+        if (onSuccess) onSuccess();
+      } else {
+        // Create new edital
+        const slug = generateSlug(data.name);
+        
+        const docRef = await addDoc(collection(db, "editais"), {
+          ...data,
+          slug: slug,
+          createdAt: new Date(),
+          // Convert dates to ensure proper format
+          subscriptionStartDate: data.subscriptionStartDate,
+          subscriptionEndDate: data.subscriptionEndDate,
+          votingStartDate: data.votingStartDate,
+          votingEndDate: data.votingEndDate,
+        });
+        
+        toast({
+          title: "Edital Criado!",
+          description: `O edital "${data.name}" foi criado com sucesso.`,
+        });
+        form.reset();
+        setImagePreview("");
+      }
     } catch (error) {
-      console.error("Erro ao criar edital:", error);
+      console.error("Erro ao salvar edital:", error);
       toast({
-        title: "Erro ao Criar Edital",
+        title: `Erro ao ${editalId ? 'Atualizar' : 'Criar'} Edital`,
         description: "Ocorreu um erro ao tentar salvar o edital. Tente novamente.",
         variant: "destructive",
       });
@@ -123,7 +160,7 @@ export default function EditalCreateForm() {
 
   return (
     <div className="w-full max-w-4xl mx-auto">
-      <PageTitle>Criar Novo Edital</PageTitle>
+      <PageTitle>{editalId ? 'Editar Edital' : 'Criar Novo Edital'}</PageTitle>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           
@@ -461,7 +498,7 @@ export default function EditalCreateForm() {
           <div className="flex justify-end pt-4">
             <Button type="submit" size="lg" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Criar Edital
+              {editalId ? 'Atualizar Edital' : 'Criar Edital'}
             </Button>
           </div>
         </form>
