@@ -1,22 +1,46 @@
+
 import ProjectSubmitForm from "@/components/edital/ProjectSubmitForm";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { doc, getDoc, Timestamp } from "firebase/firestore";
+import { db } from "@/lib/firebaseConfig";
+import PageTitle from "@/components/shared/PageTitle";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
-// This page would typically fetch edital details based on params.editalId
-// For now, we'll use a placeholder.
-async function getEditalDetails(editalId: string) {
-  // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 50)); 
-  if (editalId === "edital-exemplo-2024") {
-    return {
-      id: editalId,
-      name: "Edital de Fomento à Cultura Local 2024",
-      description: "Este edital visa apoiar projetos culturais na comunidade.",
-      // ... other details
-    };
-  }
-  return null;
+interface EditalDetails {
+  id: string;
+  name: string;
+  description: string;
+  // subscriptionDeadline: Date; // Could be useful for validation here
 }
 
+async function getEditalDetails(editalId: string): Promise<EditalDetails | null> {
+  try {
+    const editalRef = doc(db, "editais", editalId);
+    const editalSnap = await getDoc(editalRef);
+
+    if (editalSnap.exists()) {
+      const data = editalSnap.data();
+      // Basic validation for subscription period (optional here, main check on edital list/detail)
+      // const subDeadline = data.subscriptionDeadline instanceof Timestamp ? data.subscriptionDeadline.toDate() : new Date(0);
+      // if (new Date() > subDeadline) {
+      //   console.log("Subscription period for this edital has ended.");
+      //   return null; // Or throw an error / return specific status
+      // }
+
+      return {
+        id: editalSnap.id,
+        name: data.name || "Edital não encontrado",
+        description: data.description || "Sem descrição.",
+        // subscriptionDeadline: subDeadline,
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error("Error fetching edital details for submission: ", error);
+    return null;
+  }
+}
 
 export default async function ProjectSubmitPage({ params }: { params: { editalId: string } }) {
   const editalDetails = await getEditalDetails(params.editalId);
@@ -24,8 +48,11 @@ export default async function ProjectSubmitPage({ params }: { params: { editalId
   if (!editalDetails) {
     return (
       <div className="text-center py-10">
-        <h1 className="text-2xl font-bold text-destructive">Edital não encontrado</h1>
-        <p className="text-muted-foreground">O edital que você está tentando acessar não existe ou não está mais disponível para submissões.</p>
+        <PageTitle className="text-2xl !text-destructive !mb-2">Edital não encontrado</PageTitle>
+        <p className="text-muted-foreground mb-4">O edital para o qual você está tentando submeter um projeto não foi encontrado, não existe ou não está mais disponível para submissões.</p>
+        <Button asChild variant="link">
+          <Link href="/editais">Voltar para Editais</Link>
+        </Button>
       </div>
     );
   }
@@ -42,9 +69,3 @@ export default async function ProjectSubmitPage({ params }: { params: { editalId
     </div>
   );
 }
-
-// Example static generation for known editais (optional)
-// export async function generateStaticParams() {
-//   // Fetch list of active edital IDs
-//   return [{ editalId: 'edital-exemplo-2024' }];
-// }

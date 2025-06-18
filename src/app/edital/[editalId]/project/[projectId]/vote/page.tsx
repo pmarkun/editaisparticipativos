@@ -1,36 +1,66 @@
+
 import ProjectVoteForm from "@/components/edital/ProjectVoteForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
+import { doc, getDoc, Timestamp } from "firebase/firestore";
+import { db } from "@/lib/firebaseConfig";
+import PageTitle from "@/components/shared/PageTitle";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
-// This page would typically fetch project details based on params
-async function getProjectDetails(editalId: string, projectId: string) {
-  // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 50));
-  if (projectId === "projeto-exemplo-cultura") {
-    return {
-      id: projectId,
-      editalId: editalId,
-      name: "Festival de Arte Urbana Comunitária",
-      description: "Um festival para celebrar a arte de rua e promover talentos locais, com workshops, murais e apresentações.",
-      proponentName: "Coletivo Arte Viva",
-      imageUrl: "https://placehold.co/600x400.png",
-      // ... other details
-    };
+interface ProjectDetails {
+  id: string;
+  editalId: string;
+  name: string; // from projectName
+  description: string;
+  // proponentName: string; // Not directly available from project document
+  imageUrl: string; // Placeholder
+  aiHint: string; // Placeholder
+  // You might want to fetch edital voting deadlines here to ensure voting is still active
+}
+
+async function getProjectDetails(projectId: string): Promise<ProjectDetails | null> {
+  try {
+    const projectRef = doc(db, "projects", projectId);
+    const projectSnap = await getDoc(projectRef);
+
+    if (projectSnap.exists()) {
+      const data = projectSnap.data();
+      return {
+        id: projectSnap.id,
+        editalId: data.editalId || "unknown-edital",
+        name: data.projectName || "Projeto Desconhecido",
+        description: data.description || "Sem descrição disponível.",
+        imageUrl: "https://placehold.co/600x400.png", // Placeholder
+        aiHint: data.projectName ? data.projectName.toLowerCase().split(" ").slice(0,2).join(" ") : "project idea",
+        // proponentName: "Nome do Proponente" // This would need to be fetched/joined if stored separately
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error("Error fetching project details for voting: ", error);
+    return null;
   }
-  return null;
 }
 
 export default async function ProjectVotePage({ params }: { params: { editalId: string, projectId: string } }) {
-  const projectDetails = await getProjectDetails(params.editalId, params.projectId);
+  const projectDetails = await getProjectDetails(params.projectId);
 
   if (!projectDetails) {
     return (
       <div className="text-center py-10">
-        <h1 className="text-2xl font-bold text-destructive">Projeto não encontrado</h1>
-        <p className="text-muted-foreground">O projeto que você está tentando acessar para votação não existe ou não está mais disponível.</p>
+        <PageTitle className="text-2xl !text-destructive !mb-2">Projeto não encontrado</PageTitle>
+        <p className="text-muted-foreground mb-4">O projeto que você está tentando acessar para votação não existe ou não está mais disponível.</p>
+        <Button asChild variant="link">
+          <Link href={`/edital/${params.editalId || 'default-edital-id'}`}>Voltar ao Edital</Link>
+        </Button>
       </div>
     );
   }
+
+  // Optional: Add logic here to check if edital voting period is active
+  // by fetching edital details (params.editalId) and comparing dates.
+  // If not active, display a message and disable the form.
 
   return (
     <div>
@@ -40,15 +70,17 @@ export default async function ProjectVotePage({ params }: { params: { editalId: 
             <Image 
               src={projectDetails.imageUrl} 
               alt={projectDetails.name} 
-              layout="fill" 
+              fill
               objectFit="cover" 
-              data-ai-hint="community art festival"
+              data-ai-hint={projectDetails.aiHint}
             />
           </div>
         )}
         <CardHeader>
           <CardTitle className="font-headline text-2xl text-primary">{projectDetails.name}</CardTitle>
+          {/* Proponent name is not directly available 
           <CardDescription className="text-sm">Proponente: {projectDetails.proponentName}</CardDescription>
+          */}
         </CardHeader>
         <CardContent>
           <p className="text-foreground/80 leading-relaxed">{projectDetails.description}</p>
@@ -62,9 +94,3 @@ export default async function ProjectVotePage({ params }: { params: { editalId: 
     </div>
   );
 }
-
-// Example static generation for known projects (optional)
-// export async function generateStaticParams() {
-//   // Fetch list of active project IDs for specific editais
-//   return [{ editalId: 'edital-exemplo-2024', projectId: 'projeto-exemplo-cultura' }];
-// }

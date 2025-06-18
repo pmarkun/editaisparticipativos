@@ -1,42 +1,65 @@
+
 import PageTitle from "@/components/shared/PageTitle";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { CalendarCheck, DollarSign, Target, UserCircle, MapPin, Share2 } from "lucide-react";
 import Image from "next/image";
+import { doc, getDoc, Timestamp } from "firebase/firestore";
+import { db } from "@/lib/firebaseConfig";
 
-// Placeholder data for a specific project
-async function getProjectDetails(projectId: string) {
-  // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 50));
+interface ProjectDetailsData {
+  id: string;
+  name: string; // from projectName
+  category: string; // from projectCategory
+  description: string;
+  location: string;
+  beneficiaries: string;
+  value: number;
+  submissionDate: Date; // from submittedAt
+  imageUrl: string; // placeholder
+  aiHint: string;   // placeholder
+  editalId: string;
+  editalName: string;
+  // proponentName: string; // Not directly available from project document
+}
 
-  if (projectId === "projeto-exemplo-cultura" || projectId.startsWith("festival-de-arte-urbana-comunitaria")) { // Match slugified names
-    return {
-      id: projectId,
-      editalId: "edital-exemplo-2024", // Example edital ID
-      editalName: "Edital de Fomento à Cultura Local 2024",
-      name: "Festival de Arte Urbana Comunitária",
-      proponentName: "Coletivo Arte Viva",
-      category: "Cultura",
-      description: "O Festival de Arte Urbana Comunitária visa transformar espaços públicos através da arte, promovendo a cultura local e o engajamento da comunidade. O projeto inclui a pintura de murais por artistas locais, workshops de grafite e stencil para jovens, apresentações de dança de rua e batalhas de rima. Buscamos revitalizar áreas degradadas, oferecer oportunidades para novos talentos e criar um ambiente de intercâmbio cultural e expressão artística, fortalecendo os laços comunitários e o sentimento de pertencimento.",
-      location: "Diversas praças e muros da Região Central",
-      beneficiaries: "Jovens artistas, moradores da Região Central, comunidade em geral.",
-      value: 15000.00,
-      submissionDate: "2024-07-15",
-      imageUrl: "https://placehold.co/800x450.png",
-      aiHint: "urban art community"
-      // votes: 125, // Example vote count
-    };
+async function getProjectDetails(projectId: string): Promise<ProjectDetailsData | null> {
+  try {
+    const projectRef = doc(db, "projects", projectId);
+    const projectSnap = await getDoc(projectRef);
+
+    if (projectSnap.exists()) {
+      const data = projectSnap.data();
+      return {
+        id: projectSnap.id,
+        name: data.projectName || "Projeto Desconhecido",
+        category: data.projectCategory || "Categoria Desconhecida",
+        description: data.description || "Sem descrição disponível.",
+        location: data.location || "Localização não informada.",
+        beneficiaries: data.beneficiaries || "Beneficiários não informados.",
+        value: data.value || 0,
+        submissionDate: data.submittedAt instanceof Timestamp ? data.submittedAt.toDate() : new Date(),
+        imageUrl: "https://placehold.co/800x450.png", // Placeholder
+        aiHint: data.projectName ? data.projectName.toLowerCase().split(" ").slice(0,2).join(" ") : "project details",
+        editalId: data.editalId || "unknown-edital",
+        editalName: data.editalName || "Edital Desconhecido",
+        // proponentName: "Nome do Proponente" // This would need to be fetched/joined if stored separately
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error("Error fetching project details: ", error);
+    return null;
   }
-  return null;
 }
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 }
 
-function formatDate(dateString: string) {
-  return new Date(dateString + 'T00:00:00').toLocaleDateString('pt-BR', {
+function formatDate(date: Date): string {
+  return date.toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -49,14 +72,19 @@ export default async function ProjectDetailsPage({ params }: { params: { project
   if (!project) {
     return (
       <div className="text-center py-10">
-        <h1 className="text-2xl font-bold text-destructive">Projeto não encontrado</h1>
-        <p className="text-muted-foreground">O projeto que você está tentando acessar não existe.</p>
+        <PageTitle className="text-2xl !text-destructive !mb-2">Projeto não encontrado</PageTitle>
+        <p className="text-muted-foreground mb-4">O projeto que você está tentando acessar não existe.</p>
+         <Button asChild variant="link">
+          <Link href="/editais">Voltar para Editais</Link>
+        </Button>
       </div>
     );
   }
 
-  // Determine if voting is active based on edital data (needs to be fetched or passed)
-  const isVotingActive = false; // Placeholder: this would depend on the associated edital's votingDeadline
+  // Placeholder: this would depend on the associated edital's votingDeadline
+  // For now, we assume voting might be closed or not relevant on this generic project page.
+  // To implement this, fetch editalData based on project.editalId
+  // const isVotingActive = false; 
 
   return (
     <div className="container mx-auto py-8">
@@ -65,7 +93,7 @@ export default async function ProjectDetailsPage({ params }: { params: { project
            <Image 
             src={project.imageUrl} 
             alt={project.name} 
-            layout="fill" 
+            fill
             objectFit="cover" 
             data-ai-hint={project.aiHint}
             priority
@@ -74,7 +102,9 @@ export default async function ProjectDetailsPage({ params }: { params: { project
           <div className="absolute bottom-0 left-0 p-8">
             <span className="px-3 py-1 text-xs font-semibold rounded-full bg-primary text-primary-foreground mb-2 inline-block">{project.category}</span>
             <PageTitle className="text-primary-foreground drop-shadow-lg !mb-1 !text-4xl">{project.name}</PageTitle>
-            <p className="text-md text-primary-foreground/90 drop-shadow-sm">Proponente: {project.proponentName}</p>
+            {/* Proponent name is not directly available from project document
+            <p className="text-md text-primary-foreground/90 drop-shadow-sm">Proponente: {project.proponentName}</p> 
+            */}
           </div>
         </div>
         
@@ -126,27 +156,18 @@ export default async function ProjectDetailsPage({ params }: { params: { project
                 <CardTitle className="text-lg flex items-center gap-2"><UserCircle className="h-5 w-5 text-primary" /> Proponente</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="font-medium text-foreground">{project.proponentName}</p>
-                <Link href={`/edital/${project.editalId}`} className="text-xs text-primary hover:underline">
+                {/* Proponent Name is not directly available
+                <p className="font-medium text-foreground">{project.proponentName}</p> 
+                */}
+                <p className="text-muted-foreground text-sm">Informações do proponente não disponíveis diretamente aqui.</p>
+                <Link href={`/edital/${project.editalId}`} className="text-xs text-primary hover:underline block mt-1">
                   Ver Edital: {project.editalName}
                 </Link>
               </CardContent>
             </Card>
-
-            {/* Placeholder for vote count - would come from DB */}
-            {/* {project.votes !== undefined && (
-            <Card className="bg-background shadow-md">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2"><VoteIcon className="h-5 w-5 text-primary" /> Votos Recebidos</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold text-accent">{project.votes}</p>
-                <p className="text-xs text-muted-foreground">Votos até o momento.</p>
-              </CardContent>
-            </Card>
-            )} */}
             
             <div className="space-y-3">
+              {/* Voting button might not be relevant here or needs complex logic to determine if active
               {isVotingActive && (
                 <Button size="lg" className="w-full" asChild>
                   <Link href={`/edital/${project.editalId}/project/${project.id}/vote`}>
@@ -154,7 +175,12 @@ export default async function ProjectDetailsPage({ params }: { params: { project
                   </Link>
                 </Button>
               )}
-              <Button variant="outline" size="lg" className="w-full" onClick={() => navigator.clipboard.writeText(window.location.href).then(() => alert('Link copiado!'))}>
+              */}
+              <Button variant="outline" size="lg" className="w-full" onClick={() => {
+                if(typeof window !== "undefined") {
+                   navigator.clipboard.writeText(window.location.href).then(() => alert('Link copiado!'))
+                }
+              }}>
                 <Share2 className="mr-2 h-4 w-4" /> Compartilhar Projeto
               </Button>
             </div>
@@ -162,16 +188,10 @@ export default async function ProjectDetailsPage({ params }: { params: { project
         </CardContent>
         <CardFooter className="bg-muted/30 p-4 md:p-6 text-center">
             <Link href={`/edital/${project.editalId}`} className="text-sm text-primary hover:underline">
-                &larr; Voltar para a lista de projetos do edital
+                &larr; Voltar para a lista de projetos do edital: {project.editalName}
             </Link>
         </CardFooter>
       </Card>
     </div>
   );
 }
-
-// export async function generateStaticParams() {
-//   // Fetch list of all project IDs if you want to pre-render them
-//   // For now, an example:
-//   return [{ projectId: 'projeto-exemplo-cultura' }];
-// }
