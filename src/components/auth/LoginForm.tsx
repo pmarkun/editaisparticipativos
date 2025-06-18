@@ -56,6 +56,8 @@ export default function LoginForm() {
     } catch (error: any) {
       console.error("Erro no login:", error);
       let errorMessage = "Ocorreu um erro ao tentar fazer login. Tente novamente.";
+      let errorTitle = "Erro no Login";
+
       if (error.code) {
         switch (error.code) {
           case "auth/user-not-found":
@@ -67,16 +69,18 @@ export default function LoginForm() {
             errorMessage = "O formato do email é inválido.";
             break;
           case "auth/configuration-not-found":
-             errorMessage = "Erro de configuração do Firebase Auth. Verifique as variáveis de ambiente.";
-             break;
+            errorTitle = "Erro de Configuração do Firebase Auth";
+            errorMessage = "Não foi possível conectar ao Firebase. Verifique se as variáveis de ambiente (como NEXT_PUBLIC_FIREBASE_API_KEY) estão corretas no arquivo .env.local e se o servidor de desenvolvimento foi reiniciado.";
+            break;
           default:
-            errorMessage = "Ocorreu um erro desconhecido.";
+            errorMessage = `Ocorreu um erro desconhecido: ${error.message || error.code}`;
         }
       }
       toast({
-        title: "Erro no Login",
+        title: errorTitle,
         description: errorMessage,
         variant: "destructive",
+        duration: 9000, 
       });
     } finally {
       setIsLoading(false);

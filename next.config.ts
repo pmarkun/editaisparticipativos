@@ -1,4 +1,5 @@
 import type {NextConfig} from 'next';
+console.log('ENV:', process.env);
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -19,5 +20,6 @@ const nextConfig: NextConfig = {
     ],
   },
 };
+
 
 export default nextConfig;
