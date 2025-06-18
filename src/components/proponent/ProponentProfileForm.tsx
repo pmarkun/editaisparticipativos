@@ -11,16 +11,51 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import EntitySubForm from "./EntitySubForm";
 import { Loader2, PlusCircle } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import PageTitle from "@/components/shared/PageTitle";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
-import { db } from "@/firebase/client";
-import { collection, addDoc, Timestamp, doc, setDoc } from "firebase/firestore";
+import { auth, db } from "@/firebase/client";
+import { collection, addDoc, Timestamp, doc, setDoc, getDoc } from "firebase/firestore";
+import { onAuthStateChanged, type User } from "firebase/auth";
+import { useRouter } from "next/navigation";
 
 export default function ProponentProfileForm() {
   const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const { toast } = useToast();
+  const router = useRouter();
+
+  // Monitor authentication state
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+      setAuthLoading(false);
+      
+      if (currentUser) {
+        // Load existing profile data if it exists
+        try {
+          const profileDoc = await getDoc(doc(db, "proponents", currentUser.uid));
+          if (profileDoc.exists()) {
+            const profileData = profileDoc.data();
+            form.reset({
+              sex: profileData.sex || "",
+              race: profileData.race || "",
+              address: profileData.address || "",
+              phone: profileData.phone || "",
+              areaOfExpertise: profileData.areaOfExpertise || "",
+              entities: profileData.entities || [],
+            });
+          }
+        } catch (error) {
+          console.error("Erro ao carregar perfil existente:", error);
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const form = useForm<ProponentProfileFormData>({
     resolver: zodResolver(ProponentProfileSchema),
@@ -31,9 +66,6 @@ export default function ProponentProfileForm() {
       phone: "",
       areaOfExpertise: "",
       entities: [],
-      // Em um app real, você buscaria o email do usuário logado (Firebase Auth) e usaria como ID aqui.
-      // Ou, se for um novo usuário, usaria o ID gerado pelo Firebase Auth.
-      // Por agora, o `id` não é usado ativamente para `addDoc`, mas seria para `setDoc`.
     },
   });
 
@@ -43,32 +75,34 @@ export default function ProponentProfileForm() {
   });
 
   async function onSubmit(data: ProponentProfileFormData) {
+    if (!user) {
+      toast({
+        title: "Erro de Autenticação",
+        description: "Você precisa estar logado para salvar o perfil. Faça login e tente novamente.",
+        variant: "destructive",
+      });
+      router.push('/login');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // NOTA: Em uma aplicação real com autenticação, você usaria o ID do usuário logado
-      // para criar ou atualizar o documento do perfil. Ex:
-      // const userId = firebase.auth().currentUser.uid;
-      // await setDoc(doc(db, "proponents", userId), { ...data, updatedAt: Timestamp.now() });
-      //
-      // Como não temos autenticação completa aqui, usaremos addDoc, que criará um novo perfil
-      // a cada submissão. Isso é apenas para fins de demonstração da integração com Firestore.
+      // Usar o UID do usuário autenticado como ID do documento do perfil
       const profileData = {
         ...data,
-        // Removendo o campo `id` se ele existir nos dados, pois `addDoc` gera o ID.
-        // Se usasse `setDoc`, o `id` seria o ID do documento.
-        id: undefined, 
-        createdAt: Timestamp.now(), // Ou updatedAt se for uma atualização
+        userId: user.uid,
+        userEmail: user.email,
+        updatedAt: Timestamp.now(),
+        createdAt: Timestamp.now(), // Será preservado se o documento já existir
       };
 
-      const docRef = await addDoc(collection(db, "proponents"), profileData);
+      // Usar setDoc com merge: true para preservar campos existentes ou criar novo documento
+      await setDoc(doc(db, "proponents", user.uid), profileData, { merge: true });
       
       toast({
         title: "Perfil Salvo!",
-        description: `Suas informações foram salvas com sucesso. ID do Perfil: ${docRef.id}`,
+        description: "Suas informações foram salvas com sucesso.",
       });
-      // Não resetar o formulário aqui é comum para formulários de perfil,
-      // permitindo que o usuário veja os dados que acabou de salvar.
-      // form.reset(); 
     } catch (error) {
       console.error("Erro ao salvar perfil:", error);
       toast({
@@ -79,6 +113,38 @@ export default function ProponentProfileForm() {
     } finally {
       setIsLoading(false);
     }
+  }
+
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="w-full max-w-3xl mx-auto">
+        <PageTitle>Completar Perfil do Proponente</PageTitle>
+        <div className="flex items-center justify-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Carregando...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect to login if not authenticated
+  if (!user) {
+    return (
+      <div className="w-full max-w-3xl mx-auto">
+        <PageTitle>Completar Perfil do Proponente</PageTitle>
+        <Card className="shadow-lg">
+          <CardContent className="p-8 text-center">
+            <p className="text-muted-foreground mb-4">
+              Você precisa estar logado para acessar o perfil do proponente.
+            </p>
+            <Button onClick={() => router.push('/login')}>
+              Fazer Login
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
