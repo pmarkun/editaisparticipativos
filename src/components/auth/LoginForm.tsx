@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -11,11 +12,14 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-
+import { useRouter } from "next/navigation"; // Importar useRouter
+import { signInWithEmailAndPassword } from "firebase/auth"; // Importar do Firebase Auth
+import { auth } from "@/lib/firebaseConfig"; // Importar instância do Auth
 
 export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(LoginSchema),
@@ -27,23 +31,41 @@ export default function LoginForm() {
 
   async function onSubmit(data: LoginFormData) {
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    console.log(data);
-    setIsLoading(false);
-    // On success: redirect to dashboard or appropriate page
-    // router.push('/dashboard'); 
-    // On error:
-    toast({
-      title: "Login realizado (simulado)",
-      description: "Você seria redirecionado para o painel.",
-      variant: "default",
-    });
-    // toast({
-    //   title: "Erro no Login",
-    //   description: "Email ou senha inválidos.",
-    //   variant: "destructive",
-    // });
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
+      // Login bem-sucedido
+      toast({
+        title: "Login realizado com sucesso!",
+        description: `Bem-vindo de volta, ${userCredential.user.email}!`,
+      });
+      // Redirecionar para o dashboard do proponente por padrão
+      // Em uma app real, você pode verificar a role do usuário aqui e redirecionar apropriadamente
+      router.push('/proponent/dashboard'); 
+    } catch (error: any) {
+      console.error("Erro no login:", error);
+      let errorMessage = "Ocorreu um erro ao tentar fazer login. Tente novamente.";
+      if (error.code) {
+        switch (error.code) {
+          case "auth/user-not-found":
+          case "auth/wrong-password":
+          case "auth/invalid-credential":
+            errorMessage = "Email ou senha inválidos.";
+            break;
+          case "auth/invalid-email":
+            errorMessage = "O formato do email é inválido.";
+            break;
+          default:
+            errorMessage = "Ocorreu um erro desconhecido.";
+        }
+      }
+      toast({
+        title: "Erro no Login",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (

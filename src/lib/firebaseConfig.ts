@@ -1,7 +1,7 @@
 
 import { initializeApp, getApps, getApp, type FirebaseOptions } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
-// import { getAuth } from 'firebase/auth'; // Descomente se precisar de autenticação
+import { getAuth } from 'firebase/auth'; // Descomentado para usar autenticação
 // import { getStorage } from 'firebase/storage'; // Descomente se precisar de storage
 
 const firebaseConfig: FirebaseOptions = {
@@ -22,7 +22,7 @@ if (!getApps().length) {
 }
 
 const db = getFirestore(app);
-// const auth = getAuth(app); // Descomente se precisar de autenticação
+const auth = getAuth(app); // Instância do Auth habilitada
 // const storage = getStorage(app); // Descomente se precisar de storage
 
-export { app, db /*, auth, storage */ };
+export { app, db, auth /*, storage */ };
