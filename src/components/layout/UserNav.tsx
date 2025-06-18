@@ -91,8 +91,8 @@ export default function UserNav() {
     return initials;
   };
 
-  // Assumir perfil de proponente por padrão (pode ser expandido para buscar do Firestore)
-  const dashboardPath = '/proponent/dashboard';
+  // Dashboard unificado
+  const dashboardPath = '/dashboard';
   const profilePath = '/proponent/profile';
 
   return (
