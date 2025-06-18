@@ -52,9 +52,8 @@ export default function LoginForm() {
         title: "Login realizado com sucesso!",
         description: `Bem-vindo de volta, ${userCredential.user.email}!`,
       });
-      // Redirecionar para o dashboard do proponente por padrão
-      // Em uma app real, você pode verificar a role do usuário aqui e redirecionar apropriadamente
-      router.push('/proponent/dashboard'); 
+      // Redirecionar para o dashboard unificado
+      router.push('/dashboard');
     } catch (error: any) {
       console.error("Erro no login:", error);
       let errorMessage = "Ocorreu um erro ao tentar fazer login. Tente novamente.";

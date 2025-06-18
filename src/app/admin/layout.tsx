@@ -20,7 +20,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Painel Admin">
-                  <Link href="/admin/dashboard">
+                  <Link href="/dashboard">
                     <Home />
                     <span>Painel</span>
                   </Link>
