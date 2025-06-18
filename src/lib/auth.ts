@@ -11,38 +11,24 @@ export interface UserData {
   email: string;
   role: 'admin' | 'proponent';
   createdAt: Date;
-}
-
-export interface ProponentData {
-  userId: string;
-  // Basic info
-  name: string;
-  email: string;
-  phone: string;
-  cpf: string;
-  // Additional info
-  sex: string;
-  race: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  areaOfExpertise: string;
-  // Entity info
-  hasEntity: boolean;
-  entityName?: string;
-  entityCnpj?: string;
-  entityMunicipalCode?: string;
-  entityAddress?: string;
-  entityCity?: string;
-  entityState?: string;
-  entityZipCode?: string;
+  // Proponent-specific fields (only populated if role is 'proponent')
+  phone?: string;
+  sex?: string;
+  race?: string;
+  address?: string;
+  areaOfExpertise?: string;
+  hasEntity?: boolean;
+  entities?: Array<{
+    name: string;
+    cnpj: string;
+    municipalCode?: string;
+    address: string;
+  }>;
 }
 
 export interface AuthState {
   user: User | null;
   userData: UserData | null;
-  proponentData: ProponentData | null;
   loading: boolean;
   isAdmin: boolean;
   hasEntity: boolean;
@@ -51,7 +37,6 @@ export interface AuthState {
 export function useAuth(): AuthState {
   const [user, setUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
-  const [proponentData, setProponentData] = useState<ProponentData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -70,16 +55,15 @@ export function useAuth(): AuthState {
               email: data.email || firebaseUser.email || '',
               role: data.role || 'proponent',
               createdAt: data.createdAt?.toDate() || new Date(),
+              // Proponent-specific fields
+              phone: data.phone,
+              sex: data.sex,
+              race: data.race,
+              address: data.address,
+              areaOfExpertise: data.areaOfExpertise,
+              hasEntity: data.hasEntity || false,
+              entities: data.entities || [],
             });
-
-            // If user is a proponent, fetch proponent data
-            if (data.role === 'proponent') {
-              const proponentDoc = await getDoc(doc(db, 'proponents', firebaseUser.uid));
-              if (proponentDoc.exists()) {
-                const proponentData = proponentDoc.data() as ProponentData;
-                setProponentData(proponentData);
-              }
-            }
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
@@ -87,7 +71,6 @@ export function useAuth(): AuthState {
       } else {
         setUser(null);
         setUserData(null);
-        setProponentData(null);
       }
       setLoading(false);
     });
@@ -98,10 +81,9 @@ export function useAuth(): AuthState {
   return {
     user,
     userData,
-    proponentData,
     loading,
     isAdmin: userData?.role === 'admin',
-    hasEntity: proponentData?.hasEntity || false,
+    hasEntity: userData?.hasEntity || false,
   };
 }
 
@@ -120,9 +102,9 @@ export async function checkUserRole(uid: string): Promise<'admin' | 'proponent' 
 
 export async function checkUserHasEntity(uid: string): Promise<boolean> {
   try {
-    const proponentDoc = await getDoc(doc(db, 'proponents', uid));
-    if (proponentDoc.exists()) {
-      return proponentDoc.data().hasEntity || false;
+    const userDoc = await getDoc(doc(db, 'users', uid));
+    if (userDoc.exists()) {
+      return userDoc.data().hasEntity || false;
     }
     return false;
   } catch (error) {

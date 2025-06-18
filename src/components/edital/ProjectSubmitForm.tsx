@@ -17,6 +17,7 @@ import PageTitle from "@/components/shared/PageTitle";
 import { db } from "@/firebase/client";
 import { collection, addDoc, Timestamp } from "firebase/firestore";
 import { generateSlug } from "@/lib/utils";
+import { useAuth } from "@/lib/auth";
 
 interface ProjectSubmitFormProps {
   editalId: string; // To associate the project with an edital
@@ -27,6 +28,7 @@ interface ProjectSubmitFormProps {
 export default function ProjectSubmitForm({ editalId, editalName, editalSlug }: ProjectSubmitFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { userData } = useAuth();
 
   const form = useForm<ProjectSubmitFormData>({
     resolver: zodResolver(ProjectSubmitSchema),
@@ -52,7 +54,10 @@ export default function ProjectSubmitForm({ editalId, editalName, editalSlug }: 
         editalId: editalId,
         editalName: editalName, // Storing for easier display later if needed
         submittedAt: Timestamp.now(),
-        // Em um app real, você associaria o projeto a um `userId` do proponente logado
+        // Associate project with the logged-in user
+        userId: userData?.uid,
+        userEmail: userData?.email,
+        userName: userData?.name,
       };
 
       const docRef = await addDoc(collection(db, "projects"), projectData);

@@ -36,16 +36,16 @@ export default function ProponentProfileForm() {
       if (currentUser) {
         // Load existing profile data if it exists
         try {
-          const profileDoc = await getDoc(doc(db, "proponents", currentUser.uid));
-          if (profileDoc.exists()) {
-            const profileData = profileDoc.data();
+          const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
             form.reset({
-              sex: profileData.sex || "",
-              race: profileData.race || "",
-              address: profileData.address || "",
-              phone: profileData.phone || "",
-              areaOfExpertise: profileData.areaOfExpertise || "",
-              entities: profileData.entities || [],
+              sex: userData.sex || "",
+              race: userData.race || "",
+              address: userData.address || "",
+              phone: userData.phone || "",
+              areaOfExpertise: userData.areaOfExpertise || "",
+              entities: userData.entities || [],
             });
           }
         } catch (error) {
@@ -90,18 +90,20 @@ export default function ProponentProfileForm() {
       // Check if user has any entities
       const hasEntity = data.entities && data.entities.length > 0;
       
-      // Usar o UID do usuário autenticado como ID do documento do perfil
-      const profileData = {
-        ...data,
-        hasEntity, // Add hasEntity flag
-        userId: user.uid,
-        userEmail: user.email,
+      // Prepare the data to update in the users collection
+      const userUpdateData = {
+        phone: data.phone,
+        sex: data.sex,
+        race: data.race,
+        address: data.address,
+        areaOfExpertise: data.areaOfExpertise,
+        hasEntity, // Update hasEntity flag
+        entities: data.entities,
         updatedAt: Timestamp.now(),
-        createdAt: Timestamp.now(), // Será preservado se o documento já existir
       };
 
-      // Usar setDoc com merge: true para preservar campos existentes ou criar novo documento
-      await setDoc(doc(db, "proponents", user.uid), profileData, { merge: true });
+      // Update the user document in the users collection
+      await setDoc(doc(db, "users", user.uid), userUpdateData, { merge: true });
       
       toast({
         title: "Perfil Salvo!",
