@@ -16,7 +16,7 @@ import {
 import { LogIn, LogOut, Settings, UserPlus, UserCircle, LayoutGrid } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { onAuthStateChanged, signOut, type User as FirebaseUser } from "firebase/auth";
-import { auth, db } from "@/lib/firebaseConfig";
+import { auth, db } from "@/firebase/client";
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';

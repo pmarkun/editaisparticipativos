@@ -14,7 +14,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation"; // Importar useRouter
 import { signInWithEmailAndPassword } from "firebase/auth"; // Importar do Firebase Auth
-import { auth } from "@/lib/firebaseConfig"; // Importar instância do Auth
+import { auth } from "@/firebase/client"; // Importar instância do Auth
 
 export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -30,8 +30,9 @@ export default function LoginForm() {
   });
 
   async function onSubmit(data: LoginFormData) {
+    console.log("[🧪] Auth object:", auth);
+console.log("[🧪] Auth.app.options:", auth?.app?.options);
     setIsLoading(true);
-
     if (!auth) {
       toast({
         title: "Erro de Configuração do Firebase",
@@ -44,7 +45,6 @@ export default function LoginForm() {
     }
 
     try {
-      console.log(auth);
       const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
       // Login bem-sucedido
       toast({
