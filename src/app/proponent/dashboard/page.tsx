@@ -1,10 +1,39 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import PageTitle from "@/components/shared/PageTitle";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { FileText, PlusCircle, Vote } from "lucide-react";
+import { FileText, PlusCircle, Vote, Mail } from "lucide-react";
+import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
+import { db } from "@/firebase/client";
+import { useAuth } from "@/lib/auth";
 
 export default function ProponentDashboardPage() {
+  const { user } = useAuth();
+  const [messages, setMessages] = useState<Array<{id:string; title:string; createdAt:any; read:boolean}>>([]);
+
+  useEffect(() => {
+    async function load() {
+      if (!user) return;
+      const q = query(
+        collection(db, "messages"),
+        where("recipients", "array-contains", user.uid),
+        orderBy("createdAt", "desc")
+      );
+      const snap = await getDocs(q);
+      setMessages(
+        snap.docs.map((d) => {
+          const data = d.data() as any;
+          const read = (data.readBy || []).includes(user.uid);
+          return { id: d.id, title: data.title, createdAt: data.createdAt, read };
+        })
+      );
+    }
+    load();
+  }, [user]);
+
   return (
     <div className="space-y-8">
       <PageTitle>Painel do Proponente</PageTitle>
@@ -67,13 +96,26 @@ export default function ProponentDashboardPage() {
         </Card>
       </div>
 
-      {/* Placeholder for future content, e.g., notifications, quick stats */}
       <Card className="shadow-md">
         <CardHeader>
-          <CardTitle>Notificações</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5" /> Mensagens
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">Nenhuma notificação nova.</p>
+        <CardContent className="space-y-2">
+          {messages.length === 0 && (
+            <p className="text-muted-foreground">Nenhuma mensagem.</p>
+          )}
+          {messages.map((m) => (
+            <div key={m.id} className="flex justify-between items-center">
+              <Link href={`/proponent/messages/${m.id}`} className={m.read ? "" : "font-semibold"}>
+                {m.title}
+              </Link>
+              <span className="text-xs text-muted-foreground">
+                {new Date((m.createdAt as any).seconds ? (m.createdAt as any).seconds * 1000 : m.createdAt as any).toLocaleDateString()}
+              </span>
+            </div>
+          ))}
         </CardContent>
       </Card>
     </div>

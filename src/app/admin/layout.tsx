@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { Home, FileText, Settings, Users, BarChart3, Palette, PanelLeft, LogOut } from 'lucide-react';
+import { Home, FileText, Settings, Users, BarChart3, Palette, PanelLeft, LogOut, Mail } from 'lucide-react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger } from '@/components/ui/sidebar';
 import AppLogo from '@/components/layout/AppLogo';
 import { AuthGuard } from '@/components/auth/AuthGuards';
@@ -39,6 +39,14 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                   <Link href="/admin/users">
                     <Users />
                     <span>Usuários</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Mensagens">
+                  <Link href="/admin/messages">
+                    <Mail />
+                    <span>Mensagens</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
