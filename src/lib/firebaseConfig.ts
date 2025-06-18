@@ -12,7 +12,6 @@ const requiredEnvVars: string[] = [
   'NEXT_PUBLIC_FIREBASE_APP_ID',
   // You can add NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET and NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
   // if they are strictly required for your app's core functionality to start.
-  // For now, focusing on the ones most likely to cause `auth/configuration-not-found`.
 ];
 
 let firebaseConfigIsValid = true;
